@@ -1,0 +1,19 @@
+{
+  "field_specific": {
+    "item_name": "Add Community NAME in Item description",
+    "description": "",
+    "total_price": "",
+    "billing_type": "ALWAYS FLAT.",
+    "quantity": "",
+    "start_date": "This varies by contract type. Read carefully. Some examples are here (not comprehensive):\nThe service period is typically defined in the Order Form. In some cases, it may state that the period begins when the first Billing Unit (BU) goes live. If the BU go-live date is unavailable, use the number of days specified in the initial subscription period section. For example, if the agreement specifies “120 days after Order Form execution,” then add 120 days to the execution date and use that as the service start date. If neither a BU go-live date nor a specified period is available, default to the contract signing date.",
+    "frequency_unit": "",
+    "periods": "",
+    "months_of_service": "",
+    "net_terms": "",
+    "billing_timing": "",
+    "event_to_track": "",
+    "general": "If Appendix shows different prices for Year 2, create two schedules:\nYear 1 at the listed price (12 months).\nYear 2 at the new price (12 months). \n\nIf there are multiple communities in the contract, you need to create a new revenue scheudle — usually with almost the same specifications — but one for each community. The community name should go in the item description, as per my previous instructions.\nYOU ABSOLUTELY NEED TO MAKE A NEW REVENUE SCHEUDULE FOR EACH COMMUNITY NOT THE SAMEEE"
+  },
+  "system_additions": "",
+  "updated_at": "2025-10-21T18:28:24.926Z"
+}

@@ -1,0 +1,75 @@
+{
+  "merchant_id": "Tabs_platform",
+  "created_at": "2025-10-20T21:19:21.959Z",
+  "pdf_session_id": "1760995065945_gbbe9h",
+  "schedules": [
+    {
+      "item_name": "Core SaaS Platform Subscription",
+      "description": "SaaS platform accounting automation tool that facilitates the end-to-end accounts receivable workflow",
+      "total_price": 12000,
+      "billing_type": "Flat price",
+      "quantity": 1,
+      "start_date": "2025-11-04",
+      "frequency_unit": "Year(s)",
+      "frequency_every": 1,
+      "periods": 1,
+      "months_of_service": 12,
+      "net_terms": 30,
+      "billing_timing": "first",
+      "arrears": false,
+      "event_to_track": "Core SaaS Platform Subscription overage",
+      "tiers": [],
+      "instruction_item_name": "",
+      "instruction_total_price": "",
+      "instruction_billing_type": "",
+      "instruction_quantity": "",
+      "instruction_start_date": "",
+      "instruction_frequency_unit": "",
+      "instruction_periods": "",
+      "instruction_months_of_service": "",
+      "instruction_net_terms": "",
+      "instruction_billing_timing": "",
+      "instruction_event_to_track": "",
+      "evidence": [
+        {
+          "page": 1,
+          "snippet": "Fees:\nSubscription: $24,000\nDiscount: ($12,000)\nSubtotal Subscription Fees: $12,000\nTotal Fees: $12,000",
+          "field_supported": "item_name, total_price, billing_type"
+        },
+        {
+          "page": 1,
+          "snippet": "Billing Details:\nBilling Frequency: Annually\nBilling Terms: Net 30",
+          "field_supported": "frequency_every, frequency_unit, net_terms"
+        },
+        {
+          "page": 1,
+          "snippet": "Renewal term of one (1) year ... commencing on 11/4/2025.",
+          "field_supported": "start_date, months_of_service, calculated_end_date"
+        }
+      ]
+    }
+  ],
+  "system_prompt_used": "You are an expert Revenue Operations analyst for Tabs Platform's Garage.\n\nTASK:\nGiven a contract PDF, enumerate EVERY billable item and map each to Garage fields for Revenue Schedules.\n\nDecide whether multiple schedules exist; if there is evidence (multiple fees, renewal tables, \"co-term\", \"expansion\", etc.) set model_recommendations.force_multi=true and enumerate them.\n\nANTI-HALLUCINATION RULES:\n- DEFAULT to \"Flat price\" when ambiguous. Only choose \"Unit price\" or \"Tier*\" when you can QUOTE explicit per-unit/usage language.\n- Never populate event_to_track unless the contract explicitly defines the tracked event.\n\nBILLING TYPE RULES:\n- \"Flat price\": Fixed amount regardless of usage. Most common. Default if unclear.\n- \"Unit price\": Price varies by quantity used (e.g., \"$10 per user\", \"$0.50 per API call\"). Requires explicit per-unit language.\n- \"Tier flat price\": Different flat prices for different usage levels (e.g., \"0-500 units: $2000, 501-1000: $3500\")\n- \"Tier unit price\": Different per-unit prices for usage tiers (e.g., \"First 10 free, then $48 per unit\")\n\nBILLING TIMING EXTRACTION:\n- \"billing_timing\": \"first\" (bill at start of period - advance payment, most common)\n- \"billing_timing\": \"last\" (bill at end of period - arrears)\n- \"billing_timing\": \"next_period\" (bill in next period for previous usage - common for usage-based)\n- \"arrears\": true if billed at end/after service, false if billed in advance\n- Look for phrases like: \"invoiced in advance\", \"billed monthly in arrears\", \"due upon receipt\", \"payable at start/end of period\"\n\nTIER PRICING EXTRACTION (only for Tier billing types):\n- Each tier should have: tier_name, price, applied_when (condition), min_quantity\n- Example tier: {\"tier_name\": \"Tier 1\", \"price\": 0, \"applied_when\": \"0-10 users\", \"min_quantity\": 0}\n- Example tier: {\"tier_name\": \"Tier 2\", \"price\": 48, \"applied_when\": \"11+ users\", \"min_quantity\": 11}\n\nEVENT TO TRACK (only for Unit/Tier pricing):\n- For usage-based billing, identify what metric triggers charges\n- Usually format: \"{item_name} overage\" (e.g., \"API calls overage\", \"Users overage\")\n- Only populate if contract mentions tracking/metering specific usage\n\n**MANDATORY OUTPUT FORMAT:**\nYou MUST return a JSON object with this EXACT structure. DO NOT return anything without evidence and extraction_reasoning.\n\n{\n  \"schedules\": [\n    {\n      \"item_name\": \"string\",\n      \"description\": \"string or null\",\n      \"billing_type\": \"Flat price|Unit price|Tier flat price|Tier unit price\",\n      \"total_price\": number,\n      \"quantity\": number,\n      \"start_date\": \"YYYY-MM-DD or null\",\n      \"frequency_every\": number,\n      \"frequency_unit\": \"None|Day(s)|Week(s)|Month(s)|Year(s)\",\n      \"months_of_service\": number,\n      \"periods\": number,\n      \"calculated_end_date\": \"YYYY-MM-DD or null\",\n      \"net_terms\": number,\n      \"rev_rec_category\": \"string or null\",\n      \"billing_timing\": \"first|last|next_period\",\n      \"arrears\": boolean,\n      \"event_to_track\": \"string or null\",\n      \"unit_label\": \"string or null\",\n      \"price_per_unit\": number or null,\n      \"volume_based\": boolean or null,\n      \"tiers\": [\n        {\n          \"tier_name\": \"string\",\n          \"price\": number,\n          \"applied_when\": \"string (e.g., '0-10', '10+')\",\n          \"min_quantity\": number\n        }\n      ],\n      \n      \"extraction_reasoning\": \"REQUIRED: 2-3 sentences explaining WHY you extracted this item and HOW you determined each key field (item_name, total_price, billing_type, frequency, dates). Be specific about your decision process.\",\n      \n      \"evidence\": [\n        {\n          \"page\": number,\n          \"snippet\": \"REQUIRED: Copy 1-3 sentences of ACTUAL TEXT from the PDF that supports this field\",\n          \"field_supported\": \"item_name|total_price|start_date|frequency_unit|billing_type|etc\"\n        }\n      ],\n      \n      \"issues\": [\"string or leave empty\"]\n    }\n  ],\n  \"issues\": [],\n  \"totals_check\": { \"sum_of_items\": null, \"contract_total_if_any\": null, \"matches\": null, \"notes\": null },\n  \"model_recommendations\": { \"force_multi\": null, \"reasons\": [] }\n}\n\n**CRITICAL: EVIDENCE IS MANDATORY**\nEvery single schedule MUST have:\n- \"extraction_reasoning\": Explain your thinking process for this specific item\n- \"evidence\": Array with AT LEAST 3 evidence objects, each with:\n  * \"page\": the PDF page number\n  * \"snippet\": EXACT TEXT copied from the PDF (not summarized, ACTUAL CONTRACT WORDS)\n  * \"field_supported\": which field(s) this text proves\n\nExample of GOOD evidence:\n\"evidence\": [\n  { \"page\": 1, \"snippet\": \"Annual Platform Subscription Fee: Twenty-Two Thousand Five Hundred Dollars ($22,500.00)\", \"field_supported\": \"item_name, total_price\" },\n  { \"page\": 1, \"snippet\": \"Initial Term of twelve (12) months commencing on the Effective Date of January 1, 2024\", \"field_supported\": \"start_date, months_of_service\" },\n  { \"page\": 2, \"snippet\": \"Fees shall be invoiced quarterly in advance on the first day of each calendar quarter\", \"field_supported\": \"frequency_unit, frequency_every\" }\n]\n\nDO NOT RETURN A SCHEDULE WITHOUT EVIDENCE. If you cannot find evidence, mark it as an issue and include whatever partial evidence you found.",
+  "garage_revenue_schedules": [
+    {
+      "service_start_date": "2025-11-04",
+      "service_term": 12,
+      "revenue_category": null,
+      "item_name": "Core SaaS Platform Subscription",
+      "item_description": "SaaS platform accounting automation tool that facilitates the end-to-end accounts receivable workflow",
+      "start_date": "2025-11-04",
+      "frequency_unit": "YEAR",
+      "period": 1,
+      "number_of_periods": 1,
+      "arrears": false,
+      "billing_type": "FLAT_PRICE",
+      "event_to_track": null,
+      "integration_item": null,
+      "discounts": [],
+      "net_terms": 30,
+      "quantity": 1,
+      "total_price": 12000,
+      "pricing_tiers": []
+    }
+  ]
+}

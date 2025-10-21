@@ -1,0 +1,2196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Garage Contract Assistant</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f7fa;
+      margin: 0;
+      line-height: 1.6;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+    
+    /* Sidebar */
+    .sidebar {
+      width: 300px;
+      background: #2d3748;
+      color: white;
+      padding: 1.5rem;
+      overflow-y: auto;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+    }
+    
+    .sidebar h2 {
+      font-size: 1.25rem;
+      margin: 0 0 0.5rem 0;
+      color: #fff;
+    }
+    
+    .sidebar-subtitle {
+      font-size: 0.813rem;
+      color: #a0aec0;
+      margin-bottom: 1.5rem;
+    }
+    
+    .sidebar-section {
+      margin-bottom: 1.5rem;
+    }
+    
+    .sidebar-section label {
+      display: block;
+      font-size: 0.813rem;
+      font-weight: 600;
+      color: #e2e8f0;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .sidebar input,
+    .sidebar select {
+      width: 100%;
+      padding: 0.625rem;
+      border: 1px solid #4a5568;
+      border-radius: 6px;
+      background: #1a202c;
+      color: white;
+      font-size: 0.875rem;
+    }
+    
+    .sidebar input:focus,
+    .sidebar select:focus {
+      outline: none;
+      border-color: #4299e1;
+      box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2);
+    }
+    
+    .sidebar-divider {
+      height: 1px;
+      background: #4a5568;
+      margin: 1.5rem 0;
+    }
+    
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 2rem;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      font-size: 1.75rem;
+      margin-bottom: 0.5rem;
+      color: #1a202c;
+    }
+    
+    .subtitle {
+      color: #718096;
+      margin-bottom: 2rem;
+      font-size: 0.95rem;
+    }
+    
+    .card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+    
+    .card-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid #e2e8f0;
+      font-weight: 600;
+      color: #2d3748;
+    }
+    
+    .card-body {
+      padding: 1.5rem;
+    }
+    
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    
+    label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #4a5568;
+      margin-bottom: 0.375rem;
+    }
+    
+    input, select, textarea {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #cbd5e0;
+      border-radius: 6px;
+      font-size: 0.875rem;
+    }
+    
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #4299e1;
+      box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+    }
+    
+    textarea {
+      min-height: 70px;
+      resize: vertical;
+      font-family: inherit;
+    }
+    
+    .btn {
+      padding: 0.625rem 1.25rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-primary {
+      background: #4299e1;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #3182ce;
+    }
+    
+    .btn-success {
+      background: #48bb78;
+      color: white;
+    }
+    
+    .btn-success:hover {
+      background: #38a169;
+    }
+    
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .alert {
+      padding: 0.875rem 1rem;
+      border-radius: 6px;
+      margin-top: 1rem;
+      font-size: 0.875rem;
+      display: none;
+    }
+    
+    .alert.show { display: block; }
+    .alert-info { background: #bee3f8; color: #2c5282; }
+    .alert-success { background: #c6f6d5; color: #22543d; }
+    .alert-error { background: #fed7d7; color: #742a2a; }
+    
+    /* Schedule Items */
+    .schedule-item {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+    
+    .schedule-header {
+      padding: 1rem 1.25rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.875rem;
+      background: #f7fafc;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .schedule-header:hover {
+      background: #edf2f7;
+    }
+    
+    .toggle-icon {
+      width: 24px;
+      height: 24px;
+      background: #4299e1;
+      color: white;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+      transition: transform 0.2s;
+    }
+    
+    .schedule-item.open .toggle-icon {
+      transform: rotate(90deg);
+    }
+    
+    .schedule-info {
+      flex: 1;
+    }
+    
+    .schedule-name {
+      font-weight: 600;
+      color: #2d3748;
+      margin-bottom: 0.25rem;
+    }
+    
+    .schedule-meta {
+      font-size: 0.813rem;
+      color: #718096;
+    }
+    
+    .badge {
+      padding: 0.25rem 0.625rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    
+    .badge-high { background: #c6f6d5; color: #22543d; }
+    .badge-medium { background: #feebc8; color: #7c2d12; }
+    .badge-low { background: #fed7d7; color: #742a2a; }
+    .badge-none { background: #e2e8f0; color: #4a5568; }
+    
+    .schedule-content {
+      display: none;
+      padding: 1.25rem;
+    }
+    
+    .schedule-item.open .schedule-content {
+      display: block;
+    }
+    
+    /* Sections */
+    .section {
+      margin-bottom: 1.5rem;
+    }
+    
+    .section-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #2d3748;
+      margin-bottom: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .evidence-box {
+      background: #f7fafc;
+      border-left: 3px solid #4299e1;
+      padding: 0.875rem 1rem;
+      margin-bottom: 0.75rem;
+      border-radius: 4px;
+    }
+    
+    .evidence-header {
+      font-size: 0.75rem;
+      color: #4299e1;
+      font-weight: 600;
+      margin-bottom: 0.375rem;
+    }
+    
+    .evidence-text {
+      font-size: 0.875rem;
+      color: #2d3748;
+    }
+    
+    .reasoning-box {
+      background: #fffaf0;
+      border-left: 3px solid #ed8936;
+      padding: 0.875rem 1rem;
+      margin-bottom: 1rem;
+      border-radius: 4px;
+    }
+    
+    .reasoning-text {
+      font-size: 0.875rem;
+      color: #744210;
+    }
+    
+    .prompt-box {
+      background: #edf2f7;
+      padding: 1rem;
+      border-radius: 6px;
+      font-size: 0.813rem;
+      color: #2d3748;
+      max-height: 300px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      font-family: 'Courier New', monospace;
+    }
+    
+    /* Field Guidance */
+    .field-guidance {
+      background: #fffaf0;
+      border: 1px solid #fbd38d;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-top: 1.5rem;
+    }
+    
+    .guidance-header {
+      font-weight: 600;
+      color: #744210;
+      margin-bottom: 1rem;
+    }
+    
+    .guidance-grid {
+      display: grid;
+      gap: 1rem;
+    }
+    
+    .guidance-item label {
+      color: #744210;
+    }
+    
+    .actions {
+      display: flex;
+      gap: 0.625rem;
+      margin-top: 1.25rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid #e2e8f0;
+    }
+    
+    .stage-badge {
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.875rem;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    
+    .stage-demo {
+      background: #fef5e7;
+      color: #d68910;
+      border: 2px solid #f39c12;
+    }
+    
+    .stage-production {
+      background: #d5f4e6;
+      color: #186a3b;
+      border: 2px solid #27ae60;
+    }
+    
+    .instruction-field {
+      margin-top: 0.5rem;
+    }
+    
+    .instruction-field label {
+      font-size: 0.75rem;
+      color: #d68910;
+      font-weight: 600;
+    }
+    
+    .instruction-field textarea {
+      font-size: 0.813rem;
+      min-height: 50px;
+      background: #fffbf0;
+      border: 1px solid #f39c12;
+    }
+    
+    .read-only-view {
+      pointer-events: none;
+      opacity: 0.8;
+    }
+    
+    .save-demo-btn {
+      background: #f39c12;
+      color: white;
+      font-size: 0.813rem;
+      padding: 0.5rem 1rem;
+    }
+    
+    .save-demo-btn:hover {
+      background: #d68910;
+    }
+    
+    /* Floating Action Buttons */
+    .floating-actions {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      display: flex;
+      gap: 0.5rem;
+      z-index: 100;
+    }
+    
+    .floating-btn {
+      padding: 0.5rem 0.875rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.813rem;
+      font-weight: 500;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      transition: all 0.2s;
+    }
+    
+    .floating-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    
+    /* Confirmation Modal */
+    .confirmation-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .confirmation-modal.show {
+      display: flex;
+    }
+    
+    .confirmation-content {
+      background: white;
+      border-radius: 8px;
+      padding: 2rem;
+      max-width: 500px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    }
+    
+    .confirmation-content h3 {
+      margin: 0 0 1rem 0;
+      color: #d68910;
+      font-size: 1.25rem;
+    }
+    
+    .confirmation-content p {
+      margin: 0 0 1.5rem 0;
+      color: #4a5568;
+      line-height: 1.6;
+    }
+    
+    .confirmation-buttons {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: flex-end;
+    }
+    
+    /* Collapsible Instructions Section */
+    .instructions-toggle {
+      margin: 1rem 0 0.5rem 0;
+      padding: 0.75rem 1rem;
+      background: #f7fafc;
+      border: 2px dashed #cbd5e0;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.2s;
+    }
+    
+    .instructions-toggle:hover {
+      background: #edf2f7;
+      border-color: #a0aec0;
+    }
+    
+    .instructions-toggle span {
+      font-weight: 600;
+      color: #4a5568;
+      font-size: 0.95rem;
+    }
+    
+    .instructions-toggle .toggle-icon {
+      font-size: 1.25rem;
+      transition: transform 0.2s;
+    }
+    
+    .instructions-toggle.open .toggle-icon {
+      transform: rotate(180deg);
+    }
+    
+    .instructions-content {
+      display: none;
+      margin-top: 0.5rem;
+      padding: 1rem;
+      background: #f8f9fa;
+      border-radius: 6px;
+      border-left: 3px solid #d68910;
+    }
+    
+    .instructions-content.show {
+      display: block;
+    }
+    
+    /* PDF Modal */
+    .pdf-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 9999;
+      padding: 2rem;
+    }
+    
+    .pdf-modal.show {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .pdf-modal-content {
+      width: 90%;
+      height: 90%;
+      background: white;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    }
+    
+    .pdf-modal-header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f7fafc;
+      border-radius: 8px 8px 0 0;
+    }
+    
+    .pdf-modal-header h3 {
+      margin: 0;
+      font-size: 1.25rem;
+      color: #2d3748;
+    }
+    
+    .pdf-modal-close {
+      background: #e53e3e;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+    
+    .pdf-modal-close:hover {
+      background: #c53030;
+    }
+    
+    .pdf-modal-body {
+      flex: 1;
+      overflow: hidden;
+    }
+    
+    .pdf-modal iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    
+    /* Landing Page */
+    .landing-page {
+      min-height: 100vh;
+      width: 100vw;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 2rem;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 9999;
+    }
+    
+    .landing-container {
+      background: white;
+      border-radius: 16px;
+      padding: 3rem 2.5rem;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+    
+    .landing-logo {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+    
+    .landing-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #2d3748;
+      margin: 0 0 0.5rem 0;
+    }
+    
+    .landing-subtitle {
+      font-size: 1rem;
+      color: #718096;
+      margin: 0 0 2.5rem 0;
+    }
+    
+    .landing-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    
+    .landing-select-group {
+      text-align: left;
+    }
+    
+    .landing-select-group label {
+      display: block;
+      font-weight: 600;
+      color: #4a5568;
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+    }
+    
+    .landing-select {
+      width: 100%;
+      padding: 0.875rem 1rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 1rem;
+      color: #2d3748;
+      background: white;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    
+    .landing-select:hover {
+      border-color: #cbd5e0;
+    }
+    
+    .landing-select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .landing-start-btn {
+      padding: 1rem 2rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.125rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    .landing-start-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+    }
+    
+    .landing-start-btn:active {
+      transform: translateY(0);
+    }
+    
+    .landing-start-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .landing-footer {
+      margin-top: 2rem;
+      font-size: 0.875rem;
+      color: #a0aec0;
+    }
+    
+    .main-app {
+      display: none;
+    }
+    
+    .main-app.active {
+      display: flex;
+    }
+  </style>
+</head>
+<body>
+  <!-- Landing Page -->
+  <div class="landing-page" id="landingPage">
+    <div class="landing-container">
+      <div class="landing-logo">🚗</div>
+      <h1 class="landing-title">Garage Contract Processor</h1>
+      <p class="landing-subtitle">Extract revenue schedules from contracts with AI precision</p>
+      
+      <div class="landing-form">
+        <div class="landing-select-group">
+          <label for="landingMerchantSelect">Select Merchant</label>
+          <select id="landingMerchantSelect" class="landing-select" required>
+            <option value="">Loading merchants...</option>
+          </select>
+            </div>
+        
+        <div id="landingNewMerchantContainer" style="display:none;">
+          <label style="display:block;font-weight:600;color:#4a5568;margin-bottom:0.5rem;text-align:left;">New Merchant Name</label>
+          <input type="text" id="landingNewMerchantName" placeholder="Enter merchant name" style="width:100%;padding:0.875rem 1rem;border:2px solid #e2e8f0;border-radius:8px;font-size:1rem;">
+            </div>
+        
+        <button type="button" class="landing-start-btn" onclick="startProcessing()">
+          Start Processing →
+        </button>
+          </div>
+
+      <div class="landing-footer">
+        Powered by Tabs Platform · Garage
+            </div>
+    </div>
+  </div>
+
+  <!-- Main App (Hidden Initially) -->
+  <div class="main-app" id="mainApp">
+  
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h2>🚗 Garage Assistant</h2>
+    <p class="sidebar-subtitle">Configure & Extract</p>
+    
+        <form id="uploadForm">
+      <div class="sidebar-section">
+        <label>Stage</label>
+        <select id="stage" required onchange="handleStageChange()">
+          <option value="demo">🧪 Demo (Training)</option>
+          <option value="production">🚀 Production (Live)</option>
+        </select>
+            </div>
+      
+      <!-- Merchant is now selected on landing page, display it here -->
+      <div class="sidebar-section" style="background:#f7fafc;padding:0.75rem;border-radius:6px;border:2px solid #e2e8f0;">
+        <div style="display:flex;align-items:center;gap:0.5rem;">
+          <span style="font-size:1.25rem;">🏢</span>
+            <div>
+            <div style="font-size:0.75rem;color:#718096;font-weight:500;">MERCHANT</div>
+            <div id="currentMerchantDisplay" style="font-size:0.95rem;color:#2d3748;font-weight:700;">-</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="sidebar-divider"></div>
+      
+      <div class="sidebar-section">
+              <label>Model</label>
+              <select id="model">
+                <option value="o3" selected>o3</option>
+                <option value="o4-mini">o4-mini</option>
+                <option value="gpt-4o-mini">GPT-4o-mini</option>
+              </select>
+            </div>
+      
+      <div class="sidebar-section">
+        <label>Agreement Runs</label>
+              <select id="runs">
+                <option value="1" selected>1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+              </select>
+            </div>
+      
+      <div class="sidebar-section">
+        <label>Multi-Schedule Detection</label>
+              <select id="forceMulti">
+                <option value="auto" selected>Auto (AI decides)</option>
+                <option value="on">Force ON (always look for multiple)</option>
+                <option value="off">Force OFF (single schedule only)</option>
+              </select>
+              <div style="font-size:0.75rem;color:#a0aec0;margin-top:0.5rem;">
+                Controls whether AI searches for multiple revenue schedules
+              </div>
+            </div>
+      
+      <div class="sidebar-divider"></div>
+      
+      <div class="sidebar-section">
+        <label>Integration Mapping</label>
+        <input type="file" id="integrationFile" accept=".xlsx,.csv" style="font-size:0.75rem;padding:0.5rem;">
+          </div>
+
+      <!-- Consistency Toggle (Production Mode Only) -->
+      <div class="sidebar-section" id="consistencyToggle" style="display:none;">
+        <label style="display:block;margin-bottom:0.75rem;font-weight:600;">Training Data Consistency</label>
+        <div style="display:flex;flex-direction:column;gap:0.75rem;">
+          <label style="display:flex;align-items:flex-start;gap:0.5rem;cursor:pointer;font-size:0.813rem;">
+            <input type="radio" name="consistency" value="consistent" checked style="margin-top:2px;">
+            <span><strong>✅ Consistent</strong><br><span style="color:#718096;">Examples follow similar format</span></span>
+          </label>
+          <label style="display:flex;align-items:flex-start;gap:0.5rem;cursor:pointer;font-size:0.813rem;">
+            <input type="radio" name="consistency" value="non-consistent" style="margin-top:2px;">
+            <span><strong>⚠️ Non-consistent</strong><br><span style="color:#718096;">Contracts vary significantly</span></span>
+          </label>
+      </div>
+    </div>
+
+      <div class="sidebar-section">
+        <label>Contract PDF *</label>
+        <input type="file" id="file" accept="application/pdf" required style="font-size:0.75rem;padding:0.5rem;">
+      </div>
+      
+      <!-- Load Previous Training (Demo Mode Only) -->
+      <div id="loadTrainingContainer" style="display:none;margin-top:1rem;padding:1rem;background:#fffaf0;border:2px solid #f39c12;border-radius:6px;">
+        <div style="font-size:0.813rem;font-weight:600;color:#d68910;margin-bottom:0.5rem;">📚 Edit Existing Training</div>
+        <div style="font-size:0.75rem;color:#744210;margin-bottom:0.75rem;">Load your saved training session to review or update instructions</div>
+        <button type="button" class="btn" style="width:100%;background:#f39c12;color:white;font-size:0.813rem;padding:0.625rem;" onclick="loadPreviousTraining()">📂 Load Previous Training Session</button>
+      </div>
+      
+      <button type="submit" class="btn btn-primary" id="submitBtn" style="width:100%;margin-top:1rem;">Analyze Contract</button>
+      <div class="alert" id="status" style="margin-top:0.75rem;"></div>
+        </form>
+    </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="container">
+    <div id="results"></div>
+
+    <div id="guidanceSection" style="display:none;" class="field-guidance">
+      <div class="guidance-header">💡 Field-Specific Guidance for <strong id="merchantName"></strong></div>
+      <p style="font-size: 0.875rem; color: #744210; margin-bottom: 1rem;">
+        Add instructions for how to extract specific fields from this merchant's contracts. These rules will apply to ALL future contracts.
+      </p>
+      
+      <div class="guidance-grid">
+        <div class="guidance-item">
+          <label>Item Name Extraction</label>
+          <textarea id="guid_item_name" placeholder="e.g., Always use the exact wording from the 'Service Description' section"></textarea>
+        </div>
+        <div class="guidance-item">
+          <label>Description Extraction</label>
+          <textarea id="guid_description" placeholder="e.g., Include community/location name, or contract-specific details"></textarea>
+        </div>
+        <div class="guidance-item">
+          <label>Total Price Extraction</label>
+          <textarea id="guid_total_price" placeholder="e.g., Use the 'Total Amount' column, not 'Monthly Amount'"></textarea>
+        </div>
+        <div class="guidance-item">
+          <label>Billing Type Determination</label>
+          <textarea id="guid_billing_type" placeholder="e.g., All items are Flat price unless explicitly stated 'per user'"></textarea>
+        </div>
+        <div class="guidance-item">
+          <label>Quantity Rules</label>
+          <textarea id="guid_quantity" placeholder="e.g., Default to 1 unless 'Number of Users' is specified"></textarea>
+        </div>
+        <div class="guidance-item">
+          <label>Start Date Extraction</label>
+          <textarea id="guid_start_date" placeholder="e.g., Use 'Effective Date' field, format as YYYY-MM-DD"></textarea>
+        </div>
+        <div class="guidance-item">
+          <label>Frequency/Billing Period</label>
+          <textarea id="guid_frequency_unit" placeholder="e.g., Platform fees are always monthly, Setup fees are always one-time"></textarea>
+        </div>
+        <div class="guidance-item">
+          <label>Periods Calculation</label>
+          <textarea id="guid_periods" placeholder="e.g., Number of billing cycles = months ÷ frequency"></textarea>
+        </div>
+        <div class="guidance-item">
+          <label>Months of Service / Term</label>
+          <textarea id="guid_months_of_service" placeholder="e.g., Look for Initial Term or Contract Duration (12, 24, 36 months)"></textarea>
+        </div>
+        <div class="guidance-item">
+          <label>Net Terms / Payment Terms</label>
+          <textarea id="guid_net_terms" placeholder="e.g., Typically Net 30, look for 'payment due within X days'"></textarea>
+        </div>
+        <div class="guidance-item">
+          <label>Billing Timing / Arrears</label>
+          <textarea id="guid_billing_timing" placeholder="e.g., Usually billed in advance (first), or in arrears (last)"></textarea>
+        </div>
+        <div class="guidance-item">
+          <label>Event to Track</label>
+          <textarea id="guid_event_to_track" placeholder="e.g., For usage-based billing only, usually {item_name} + ' overage'"></textarea>
+        </div>
+        <div class="guidance-item">
+          <label>General Guidance</label>
+          <textarea id="guid_general" placeholder="e.g., This merchant always has 3 line items: Platform Fee, Setup Fee, and Training"></textarea>
+        </div>
+      </div>
+
+      <!-- MIS Upload Section (Demo Mode Only) -->
+      <div id="misUploadContainer" style="display:none;margin-top:1.5rem;padding:1rem;background:#f7f3ff;border:2px dashed #8b5cf6;border-radius:8px;">
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem;">
+          <span style="font-size:1.5rem;">📄</span>
+          <div>
+            <div style="font-weight:600;color:#6b21a8;font-size:0.95rem;">Upload MIS Document (Optional)</div>
+            <div style="font-size:0.813rem;color:#7c3aed;">Auto-populate guidance fields using AI extraction</div>
+          </div>
+        </div>
+        <input type="file" id="misFile" accept=".pdf,.doc,.docx,.txt" style="margin-bottom:0.75rem;width:100%;padding:0.5rem;border:1px solid #c4b5fd;border-radius:4px;font-size:0.875rem;">
+        <button type="button" class="btn" style="background:#8b5cf6;color:white;width:100%;font-size:0.875rem;padding:0.625rem;" onclick="uploadMIS()">🤖 Extract Instructions from MIS</button>
+        <div id="misStatus" style="margin-top:0.75rem;font-size:0.875rem;color:#718096;text-align:center;"></div>
+      </div>
+
+      <div style="margin-top: 1rem; display: flex; gap: 0.625rem;">
+        <button type="button" class="btn btn-success" onclick="saveFieldGuidance()">💾 Save All Guidance</button>
+        <button type="button" class="btn" style="background: #718096; color: white;" onclick="loadFieldGuidance()">🔄 Reload</button>
+      </div>
+    </div>
+  </div>
+  
+  </div> <!-- End of main-app -->
+  
+  <!-- Confirmation Modal -->
+  <div id="confirmationModal" class="confirmation-modal">
+    <div class="confirmation-content">
+      <h3>⚠️ Are you sure?</h3>
+      <p>This training session will be used as reference material for future contract processing.</p>
+      <p><strong>Important:</strong> If this data is incorrect or filled incorrectly, the AI model might hallucinate or make similar mistakes on future contracts. Please double-check all fields before saving.</p>
+      <div class="confirmation-buttons">
+        <button class="btn" style="background:#718096;color:white;" onclick="closeConfirmation()">Cancel</button>
+        <button class="btn btn-success" onclick="confirmSave()">✓ Confirm & Save</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- PDF Modal -->
+  <div id="pdfModal" class="pdf-modal" onclick="closePDFModal(event)">
+    <div class="pdf-modal-content" onclick="event.stopPropagation()">
+      <div class="pdf-modal-header">
+        <h3>📄 Contract PDF</h3>
+        <button class="pdf-modal-close" onclick="closePDFModal()">✕ Close</button>
+      </div>
+      <div class="pdf-modal-body">
+        <iframe id="pdfViewer" src=""></iframe>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let integrationMapping = [];
+    let currentData = null;
+    let currentMerchantId = 'default';
+    let currentStage = 'demo';
+    let allMerchants = [];
+
+    const form = document.getElementById('uploadForm');
+    const status = document.getElementById('status');
+    
+    // Landing page merchant selection
+    const landingMerchantSelect = document.getElementById('landingMerchantSelect');
+    const landingNewMerchantContainer = document.getElementById('landingNewMerchantContainer');
+    
+    // Start Processing - Transition from landing to main app
+    function startProcessing() {
+      const selectedMerchant = landingMerchantSelect.value;
+      
+      if (selectedMerchant === '__new__') {
+        const newMerchantName = document.getElementById('landingNewMerchantName').value.trim();
+        if (!newMerchantName) {
+          alert('Please enter a merchant name');
+          return;
+        }
+        currentMerchantId = newMerchantName.replace(/[^a-zA-Z0-9_-]/g, '_');
+      } else if (selectedMerchant) {
+        currentMerchantId = selectedMerchant;
+      } else {
+        alert('Please select a merchant');
+        return;
+      }
+      
+      // Hide landing page, show main app
+      document.getElementById('landingPage').style.display = 'none';
+      document.getElementById('mainApp').classList.add('active');
+      
+      // Display the selected merchant name
+      const merchantDisplayName = landingMerchantSelect.value === '__new__' 
+        ? document.getElementById('landingNewMerchantName').value 
+        : landingMerchantSelect.options[landingMerchantSelect.selectedIndex].text;
+      
+      document.getElementById('currentMerchantDisplay').textContent = merchantDisplayName;
+      
+      // Initialize the stage
+      handleStageChange();
+    }
+    
+    // Handle landing page merchant selection
+    landingMerchantSelect.addEventListener('change', () => {
+      if (landingMerchantSelect.value === '__new__') {
+        landingNewMerchantContainer.style.display = 'block';
+      } else {
+        landingNewMerchantContainer.style.display = 'none';
+      }
+    });
+    const results = document.getElementById('results');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    async function loadMerchants() {
+      try {
+        const res = await fetch('/api/list-merchants');
+        const data = await res.json();
+        allMerchants = data.merchants || [];
+        
+        // Populate landing page dropdown
+        populateLandingMerchants();
+      } catch (error) {
+        console.error('Failed to load merchants:', error);
+        allMerchants = [];
+        populateLandingMerchants();
+      }
+    }
+    
+    function populateLandingMerchants() {
+      landingMerchantSelect.innerHTML = '<option value="">-- Select a Merchant --</option>';
+      
+      // Add all merchants (show all in landing, we'll filter in main app based on stage)
+      allMerchants.forEach(merchant => {
+        const option = document.createElement('option');
+        option.value = merchant.id;
+        option.textContent = merchant.name;
+        landingMerchantSelect.appendChild(option);
+      });
+      
+      // Always add "Create New Merchant" option on landing page
+      const newOption = document.createElement('option');
+      newOption.value = '__new__';
+      newOption.textContent = '+ Create New Merchant';
+      landingMerchantSelect.appendChild(newOption);
+    }
+    
+    // Merchant dropdown removed from sidebar - selection happens on landing page
+    
+    function handleStageChange() {
+      currentStage = document.getElementById('stage').value;
+      const badge = document.createElement('div');
+      badge.className = `stage-badge stage-${currentStage}`;
+      badge.textContent = currentStage === 'demo' 
+        ? '🧪 DEMO MODE: Review, correct, and add instructions for training'
+        : '🚀 PRODUCTION MODE: Using saved training data for extraction';
+      
+      const existing = document.querySelector('.stage-badge');
+      if (existing) existing.remove();
+      
+      form.insertBefore(badge, form.firstChild);
+      
+      // Clear results when switching stages
+      document.getElementById('results').innerHTML = '';
+      currentData = null;
+      
+      // Hide floating action buttons
+      const floatingActions = document.querySelector('.floating-actions');
+      if (floatingActions) {
+        floatingActions.innerHTML = '';
+      }
+      
+      // Show/hide guidance section based on stage
+      if (currentStage === 'demo') {
+        // Demo mode - guidance section will show after contract analysis
+      } else {
+        // Production mode - always hide guidance section
+        document.getElementById('guidanceSection').style.display = 'none';
+      }
+      
+      // Show/hide consistency toggle based on stage (Production only)
+      document.getElementById('consistencyToggle').style.display = currentStage === 'production' ? 'block' : 'none';
+      
+      // Show/hide load training button based on stage (Demo only)
+      document.getElementById('loadTrainingContainer').style.display = currentStage === 'demo' ? 'block' : 'none';
+      
+      // Hide new merchant input if switching to production
+      if (currentStage === 'production') {
+        document.getElementById('newMerchantContainer').style.display = 'none';
+        document.getElementById('newMerchantName').required = false;
+      }
+    }
+
+    // Load Previous Training Session (Demo Mode)
+    async function loadPreviousTraining() {
+      if (currentStage !== 'demo') {
+        showStatus('error', '❌ Can only load training in Demo mode');
+        return;
+      }
+      
+      if (!currentMerchantId) {
+        showStatus('error', '❌ No merchant selected');
+        return;
+      }
+      
+      showStatus('info', '⏳ Loading previous training session...');
+      
+      try {
+        // Load demo session
+        const demoRes = await fetch(`/api/load-demo-session?merchantId=${encodeURIComponent(currentMerchantId)}`);
+        const demoData = await demoRes.json();
+        
+        if (!demoData.success || !demoData.demoSession) {
+          showStatus('error', `❌ No training session found for ${currentMerchantId}`);
+          return;
+        }
+        
+        // Set currentData to the loaded session
+        currentData = {
+          schedules: demoData.demoSession.schedules,
+          system_prompt: demoData.demoSession.system_prompt_used,
+          garage_revenue_schedules: demoData.demoSession.garage_revenue_schedules,
+          pdf_session_id: demoData.demoSession.pdf_session_id,
+          model_used: 'loaded-from-training'
+        };
+        
+        // Render the results (will show editable fields in demo mode)
+        renderResults(currentData);
+        
+        // Show guidance section
+        document.getElementById('guidanceSection').style.display = 'block';
+        document.getElementById('merchantName').textContent = currentMerchantId;
+        document.getElementById('misUploadContainer').style.display = 'block';
+        
+        // Load merchant guidance
+        await loadFieldGuidance();
+        
+        showStatus('success', `✅ Loaded training session with ${currentData.schedules.length} schedule(s)`);
+        
+        // Scroll to results
+        document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+        
+      } catch (error) {
+        console.error('Load training error:', error);
+        showStatus('error', '❌ Failed to load training: ' + error.message);
+      }
+    }
+
+    // Upload MIS and extract instructions
+    async function uploadMIS() {
+      const fileInput = document.getElementById('misFile');
+      const file = fileInput.files[0];
+      
+      if (!file) {
+        showStatus('error', '❌ Please select a MIS document first');
+        return;
+      }
+      
+      // Use the merchant selected on landing page
+      const merchantId = currentMerchantId;
+      
+      if (!merchantId) {
+        showStatus('error', '❌ Merchant not selected');
+        return;
+      }
+      
+      const misStatus = document.getElementById('misStatus');
+      misStatus.textContent = '⏳ Extracting instructions from MIS...';
+      misStatus.style.color = '#d68910';
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('merchantId', merchantId);
+      
+      try {
+        const res = await fetch('/api/extract-mis-instructions', {
+          method: 'POST',
+          body: formData
+        });
+        
+        const data = await res.json();
+        
+        if (!res.ok) throw new Error(data.error || 'Failed to extract instructions');
+        
+        // Populate the general guidance field
+        const generalGuidanceField = document.getElementById('guid_general');
+        if (generalGuidanceField && data.instructions) {
+          generalGuidanceField.value = data.instructions;
+          misStatus.textContent = '✅ Instructions extracted and populated in General Guidance!';
+          misStatus.style.color = '#38a169';
+          showStatus('success', `✅ MIS instructions extracted (${data.instructions.length} characters) - Check General Guidance field`);
+        } else {
+          misStatus.textContent = '⚠️ No instructions found in MIS';
+          misStatus.style.color = '#d69e2e';
+        }
+      } catch (error) {
+        console.error('MIS upload error:', error);
+        misStatus.textContent = '❌ Failed to extract instructions';
+        misStatus.style.color = '#e53e3e';
+        showStatus('error', '❌ Failed to extract MIS instructions: ' + error.message);
+      }
+    }
+
+    document.getElementById('integrationFile').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 }).filter(r => r.length);
+        
+        if (rows.length >= 2) {
+          integrationMapping = rows.slice(1).map(r => [String(r[0]||'').trim(), String(r[1]||'').trim()]).filter(p => p[0] && p[1]);
+          showStatus('info', `✓ ${integrationMapping.length} mappings loaded`);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
+    async function loadFieldGuidance() {
+      if (!currentMerchantId) return;
+      const merchantId = currentMerchantId;
+      
+      try {
+        const res = await fetch(`/api/load-guidance?merchantId=${encodeURIComponent(merchantId)}`);
+        const data = await res.json();
+        
+        if (data.guidance && data.guidance.field_specific) {
+          const fs = data.guidance.field_specific;
+          document.getElementById('guid_item_name').value = fs.item_name || '';
+          document.getElementById('guid_description').value = fs.description || '';
+          document.getElementById('guid_total_price').value = fs.total_price || '';
+          document.getElementById('guid_billing_type').value = fs.billing_type || '';
+          document.getElementById('guid_quantity').value = fs.quantity || '';
+          document.getElementById('guid_start_date').value = fs.start_date || '';
+          document.getElementById('guid_frequency_unit').value = fs.frequency_unit || '';
+          document.getElementById('guid_periods').value = fs.periods || '';
+          document.getElementById('guid_months_of_service').value = fs.months_of_service || '';
+          document.getElementById('guid_net_terms').value = fs.net_terms || '';
+          document.getElementById('guid_billing_timing').value = fs.billing_timing || '';
+          document.getElementById('guid_event_to_track').value = fs.event_to_track || '';
+          document.getElementById('guid_general').value = fs.general || '';
+        }
+      } catch (error) {
+        console.error('Failed to load guidance:', error);
+      }
+    }
+
+    async function saveFieldGuidance() {
+      const guidance = {
+        field_specific: {
+          item_name: document.getElementById('guid_item_name').value.trim(),
+          description: document.getElementById('guid_description').value.trim(),
+          total_price: document.getElementById('guid_total_price').value.trim(),
+          billing_type: document.getElementById('guid_billing_type').value.trim(),
+          quantity: document.getElementById('guid_quantity').value.trim(),
+          start_date: document.getElementById('guid_start_date').value.trim(),
+          frequency_unit: document.getElementById('guid_frequency_unit').value.trim(),
+          periods: document.getElementById('guid_periods').value.trim(),
+          months_of_service: document.getElementById('guid_months_of_service').value.trim(),
+          net_terms: document.getElementById('guid_net_terms').value.trim(),
+          billing_timing: document.getElementById('guid_billing_timing').value.trim(),
+          event_to_track: document.getElementById('guid_event_to_track').value.trim(),
+          general: document.getElementById('guid_general').value.trim()
+        },
+        system_additions: '',
+        updated_at: new Date().toISOString()
+      };
+
+      try {
+        const res = await fetch('/api/save-guidance', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ merchantId: currentMerchantId, guidance })
+        });
+
+        if (res.ok) {
+          showStatus('success', `✅ Field-specific guidance saved for ${currentMerchantId}`);
+        } else {
+          throw new Error('Save failed');
+        }
+      } catch (error) {
+        showStatus('error', '❌ Failed to save: ' + error.message);
+      }
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const file = document.getElementById('file').files[0];
+      if (!file) return;
+
+      // Use merchant ID from landing page selection
+      const merchantId = currentMerchantId;
+      
+      if (!merchantId) {
+        showStatus('error', '❌ Merchant not selected');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+      if (integrationMapping.length > 0) {
+        formData.append('integration_mapping', JSON.stringify(integrationMapping));
+      }
+
+      const params = new URLSearchParams({
+        model: document.getElementById('model').value,
+        forceMulti: document.getElementById('forceMulti').value,
+        runs: document.getElementById('runs').value,
+        merchantId: merchantId,
+        stage: currentStage,
+        consistency: currentStage === 'production' ? (document.querySelector('input[name="consistency"]:checked')?.value || 'consistent') : 'consistent'
+      });
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Analyzing...';
+      showStatus('info', `⏳ Analyzing contract for ${merchantId}...`);
+      results.innerHTML = '';
+
+      try {
+        const res = await fetch(`/api/extract?${params}`, {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Request failed');
+
+        currentData = data;
+        
+        // In demo mode, save original AI extraction before any user corrections
+        if (currentStage === 'demo' && currentData.schedules) {
+          currentData.schedules.forEach(schedule => {
+            // Store a deep copy of the original AI extraction for comparison
+            schedule.original_ai_extraction = {
+              item_name: schedule.item_name,
+              description: schedule.description,
+              total_price: schedule.total_price,
+              billing_type: schedule.billing_type,
+              quantity: schedule.quantity,
+              start_date: schedule.start_date,
+              frequency_unit: schedule.frequency_unit,
+              frequency_every: schedule.frequency_every,
+              periods: schedule.periods,
+              months_of_service: schedule.months_of_service,
+              net_terms: schedule.net_terms,
+              billing_timing: schedule.billing_timing,
+              event_to_track: schedule.event_to_track,
+              tiers: schedule.tiers ? JSON.parse(JSON.stringify(schedule.tiers)) : []
+            };
+          });
+        }
+        
+        showStatus('success', `✅ Extracted ${data.schedules?.length || 0} schedule(s)`);
+        renderResults(data);
+        
+        // Show guidance section only in demo mode
+        if (currentStage === 'demo') {
+        document.getElementById('guidanceSection').style.display = 'block';
+        document.getElementById('merchantName').textContent = merchantId;
+          // Show MIS upload in demo mode
+          document.getElementById('misUploadContainer').style.display = 'block';
+        } else {
+          document.getElementById('guidanceSection').style.display = 'none';
+        }
+        
+      } catch (error) {
+        showStatus('error', '❌ ' + error.message);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Analyze Contract';
+      }
+    });
+
+    function showStatus(type, message) {
+      status.className = `alert alert-${type} show`;
+      status.textContent = message;
+    }
+
+    function toggleSchedule(index) {
+      document.getElementById(`schedule-${index}`).classList.toggle('open');
+    }
+
+    function renderResults(data) {
+      if (!data.schedules || data.schedules.length === 0) {
+        results.innerHTML = '<div class="card"><div class="card-body" style="text-align:center;color:#718096;">No schedules found</div></div>';
+        
+        // Show "Add Schedule" button even if no schedules in demo mode
+        if (currentStage === 'demo') {
+          results.innerHTML += `
+            <div style="text-align:center;margin-top:1rem;">
+              <button type="button" class="btn btn-success" onclick="addNewSchedule()" style="font-size:1rem;padding:0.75rem 1.5rem;">
+                ➕ Add New Revenue Schedule
+              </button>
+            </div>
+          `;
+        }
+        return;
+      }
+
+      results.innerHTML = '';
+      
+      // Add floating action buttons
+      let floatingActions = document.querySelector('.floating-actions');
+      if (!floatingActions) {
+        floatingActions = document.createElement('div');
+        floatingActions.className = 'floating-actions';
+        document.body.appendChild(floatingActions);
+      }
+      
+      floatingActions.innerHTML = '';
+      
+      if (currentStage === 'demo') {
+        floatingActions.innerHTML = `
+          <button type="button" class="floating-btn" style="background:#f39c12;color:white;" onclick="saveDemoSession()" title="Save Training Session">💾 Save Training</button>
+          ${data.pdf_session_id ? `<button type="button" class="floating-btn" style="background:#4299e1;color:white;" onclick="viewPDF('${data.pdf_session_id}')" title="View Contract PDF">📄 View PDF</button>` : ''}
+        `;
+      } else {
+        floatingActions.innerHTML = `
+          ${data.pdf_session_id ? `<button type="button" class="floating-btn" style="background:#4299e1;color:white;" onclick="viewPDF('${data.pdf_session_id}')" title="View Contract PDF">📄 View PDF</button>` : ''}
+        `;
+      }
+      
+      // Add "Add New Schedule" button at the top in demo mode
+      if (currentStage === 'demo') {
+        const addButton = document.createElement('div');
+        addButton.style.cssText = 'text-align:center;margin-bottom:1.5rem;';
+        addButton.innerHTML = `
+          <button type="button" class="btn btn-success" onclick="addNewSchedule()" style="font-size:1rem;padding:0.75rem 1.5rem;">
+            ➕ Add New Revenue Schedule
+          </button>
+        `;
+        results.appendChild(addButton);
+      }
+      
+      // Add simple header
+      const headerDiv = document.createElement('div');
+      headerDiv.className = 'card';
+      
+      if (currentStage === 'demo') {
+        headerDiv.innerHTML = `
+          <div class="card-body">
+            <h3 style="color:#d68910;margin:0;font-size:1.125rem;">🧪 Demo Mode - Training Session</h3>
+            <p style="color:#666;margin:0.5rem 0 0 0;font-size:0.875rem;">Review AI results, make corrections, and add instructions</p>
+          </div>
+        `;
+      } else {
+        headerDiv.innerHTML = `
+          <div class="card-body">
+            <h3 style="color:#186a3b;margin:0;font-size:1.125rem;">🚀 Production Mode</h3>
+            <p style="color:#666;margin:0.5rem 0 0 0;font-size:0.875rem;">Using saved training data (read-only)</p>
+          </div>
+        `;
+      }
+      
+      results.appendChild(headerDiv);
+      
+      data.schedules.forEach((schedule, index) => {
+        const item = document.createElement('div');
+        item.className = 'schedule-item';
+        item.id = `schedule-${index}`;
+        
+        const conf = schedule.integration_match_confidence || 'none';
+        const price = (schedule.total_price || 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
+        const evidenceCount = schedule.evidence?.length || 0;
+
+        item.innerHTML = `
+          <div class="schedule-header" onclick="toggleSchedule(${index})">
+            <div class="toggle-icon">▶</div>
+            <div class="schedule-info">
+              <div class="schedule-name">${esc(schedule.item_name || 'Unnamed')}</div>
+              <div class="schedule-meta">$${price} • ${schedule.billing_type || 'N/A'} • ${evidenceCount} evidence</div>
+            </div>
+            <div class="badge badge-${conf}">${conf.toUpperCase()}</div>
+          </div>
+
+          <div class="schedule-content">
+            ${schedule.extraction_reasoning ? `
+              <div class="section">
+                <div class="section-title">AI Reasoning</div>
+                <div class="reasoning-box">
+                  <div class="reasoning-text">${esc(schedule.extraction_reasoning)}</div>
+                </div>
+              </div>
+            ` : ''}
+
+            <div class="section">
+              <div class="section-title">Evidence from Contract</div>
+              ${schedule.evidence && schedule.evidence.length > 0 ? 
+                schedule.evidence.map(ev => `
+                  <div class="evidence-box">
+                    <div class="evidence-header">Page ${ev.page || '?'} • ${ev.field_supported || 'General'}</div>
+                    <div class="evidence-text">${esc(ev.snippet || 'No snippet')}</div>
+                  </div>
+                `).join('') : 
+                '<p style="color:#a0aec0;text-align:center;padding:1rem;">⚠️ No evidence provided by AI</p>'
+              }
+            </div>
+
+            <div class="section ${currentStage === 'production' ? 'read-only-view' : ''}">
+              <div class="section-title">${currentStage === 'demo' ? 'Edit & Add Instructions' : 'Extracted Fields (Read-Only)'}</div>
+              
+              <!-- Row 1: Item Name & Description -->
+              <div class="form-row">
+                <div style="grid-column: span 2;">
+                  <label>Item Name</label>
+                  <input type="text" value="${esc(schedule.item_name || '')}" data-field="item_name" data-index="${index}" ${currentStage === 'production' ? 'readonly' : ''}>
+                </div>
+                </div>
+              
+              <div class="form-row">
+                <div style="grid-column: span 2;">
+                  <label>Item Description (optional)</label>
+                  <textarea data-field="description" data-index="${index}" ${currentStage === 'production' ? 'readonly' : ''} style="min-height:60px;padding:0.5rem 0.75rem;resize:vertical;">${esc(schedule.description || '')}</textarea>
+                </div>
+              </div>
+              
+              <!-- Row 2: Billing Type, Total Price, Quantity -->
+              <div class="form-row">
+                <div>
+                  <label>Billing Type</label>
+                  <select data-field="billing_type" data-index="${index}" onchange="toggleBillingFields(${index})" ${currentStage === 'production' ? 'disabled' : ''}>
+                    <option ${schedule.billing_type === 'Flat price' ? 'selected' : ''}>Flat price</option>
+                    <option ${schedule.billing_type === 'Unit price' ? 'selected' : ''}>Unit price</option>
+                    <option ${schedule.billing_type === 'Tier flat price' ? 'selected' : ''}>Tier flat price</option>
+                    <option ${schedule.billing_type === 'Tier unit price' ? 'selected' : ''}>Tier unit price</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Total Price</label>
+                  <input type="number" step="0.01" value="${schedule.total_price || 0}" data-field="total_price" data-index="${index}" ${currentStage === 'production' ? 'readonly' : ''}>
+                </div>
+                <div>
+                  <label>Quantity</label>
+                  <input type="number" value="${schedule.quantity || 1}" data-field="quantity" data-index="${index}" ${currentStage === 'production' ? 'readonly' : ''}>
+                </div>
+              </div>
+              
+              <!-- Row 3: Start Date, # Periods, Frequency -->
+              <div class="form-row">
+                <div>
+                  <label>Start Date</label>
+                  <input type="date" value="${schedule.start_date || ''}" data-field="start_date" data-index="${index}" onchange="calculateEndDate(${index})" ${currentStage === 'production' ? 'readonly' : ''}>
+                </div>
+                <div>
+                  <label># Periods</label>
+                  <input type="number" value="${schedule.periods || 1}" data-field="periods" data-index="${index}" ${currentStage === 'production' ? 'readonly' : ''}>
+                </div>
+                <div>
+                  <label>Frequency</label>
+                  <div style="display:flex;gap:0.5rem;align-items:center;">
+                    <span style="font-size:0.875rem;">every</span>
+                    <input type="number" value="${schedule.frequency_every || 1}" data-field="frequency_every" data-index="${index}" style="width:60px;" ${currentStage === 'production' ? 'readonly' : ''}>
+                    <select data-field="frequency_unit" data-index="${index}" style="flex:1;" ${currentStage === 'production' ? 'disabled' : ''}>
+                      <option ${schedule.frequency_unit === 'None' ? 'selected' : ''}>None</option>
+                      <option ${schedule.frequency_unit === 'Day(s)' ? 'selected' : ''}>Day(s)</option>
+                      <option ${schedule.frequency_unit === 'Week(s)' ? 'selected' : ''}>Week(s)</option>
+                      <option ${schedule.frequency_unit === 'Month(s)' ? 'selected' : ''}>Month(s)</option>
+                      <option ${schedule.frequency_unit === 'Year(s)' ? 'selected' : ''}>Year(s)</option>
+                      <option ${schedule.frequency_unit === 'Semi_month(s)' ? 'selected' : ''}>Semi_month(s)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Row 4: Calculated End Date, Net Terms, Billing Timing -->
+              <div class="form-row">
+                <div>
+                  <label>Calculated End Date</label>
+                  <input type="date" id="calc-end-${index}" value="${(() => {
+                    if (!schedule.start_date) return '';
+                    const start = new Date(schedule.start_date);
+                    if (isNaN(start.getTime())) return '';
+                    const end = new Date(start);
+                    end.setMonth(end.getMonth() + (parseInt(schedule.months_of_service) || 12));
+                    return end.toISOString().split('T')[0];
+                  })()}" readonly style="background:#f7fafc;cursor:not-allowed;">
+                </div>
+                <div>
+                  <label>Net Terms (days)</label>
+                  <input type="number" value="${schedule.net_terms || 0}" data-field="net_terms" data-index="${index}" ${currentStage === 'production' ? 'readonly' : ''}>
+                </div>
+                <div>
+                  <label>Billing Timing</label>
+                  <select data-field="billing_timing" data-index="${index}" ${currentStage === 'production' ? 'disabled' : ''}>
+                    <option value="first" ${!schedule.billing_timing || schedule.billing_timing === 'first' || schedule.arrears === false ? 'selected' : ''}>Bill first of period</option>
+                    <option value="last" ${schedule.billing_timing === 'last' || schedule.arrears === true ? 'selected' : ''}>Bill last of period</option>
+                    <option value="next_period" ${schedule.billing_timing === 'next_period' ? 'selected' : ''}>Bill first of next period</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div class="form-row">
+                <div>
+                  <label>Months of Service (Service Term)</label>
+                  <input type="number" value="${schedule.months_of_service || 12}" data-field="months_of_service" data-index="${index}" onchange="calculateEndDate(${index})" ${currentStage === 'production' ? 'readonly' : ''}>
+                </div>
+              </div>
+              
+              <!-- Event to Track (for Unit/Tier pricing only) -->
+              <div id="event-track-${index}" class="form-row" style="display:${schedule.billing_type !== 'Flat price' ? 'grid' : 'none'};">
+                <div style="grid-column: span 2;">
+                  <label>Event to Track (for usage/overage)</label>
+                  <input type="text" value="${esc(schedule.event_to_track || (schedule.item_name ? schedule.item_name + ' overage' : ''))}" data-field="event_to_track" data-index="${index}" placeholder="${esc((schedule.item_name || 'Item') + ' overage')}" ${currentStage === 'production' ? 'readonly' : ''}>
+                </div>
+              </div>
+              
+              <!-- Tier Pricing (for Tier pricing only) -->
+              <div id="tier-section-${index}" style="display:${schedule.billing_type && (schedule.billing_type === 'Tier flat price' || schedule.billing_type === 'Tier unit price') ? 'block' : 'none'};margin-top:1rem;padding:1rem;background:#f7fafc;border-radius:6px;">
+                <h4 style="margin:0 0 0.75rem 0;font-size:0.875rem;font-weight:600;color:#2d3748;">Tier Pricing</h4>
+                <div id="tiers-container-${index}">
+                  ${(schedule.tiers || []).map((tier, tierIdx) => `
+                    <div class="form-row" style="background:white;padding:0.75rem;border-radius:4px;margin-bottom:0.5rem;border:1px solid #e2e8f0;">
+                      <div>
+                        <label>Tier ${tierIdx + 1} Name</label>
+                        <input type="text" value="${esc(tier.tier_name || `Tier ${tierIdx + 1}`)}" data-tier="tier_name" data-tier-idx="${tierIdx}" data-index="${index}" ${currentStage === 'production' ? 'readonly' : ''}>
+                      </div>
+                      <div>
+                        <label>Price ${schedule.billing_type === 'Tier unit price' ? '(per unit)' : '(flat)'}</label>
+                        <input type="number" step="0.01" value="${tier.price || 0}" data-tier="price" data-tier-idx="${tierIdx}" data-index="${index}" ${currentStage === 'production' ? 'readonly' : ''}>
+                      </div>
+                      <div>
+                        <label>Applied When (condition)</label>
+                        <input type="text" value="${esc(tier.applied_when || '')}" data-tier="applied_when" data-tier-idx="${tierIdx}" data-index="${index}" placeholder="e.g., 0-10, 10+" ${currentStage === 'production' ? 'readonly' : ''}>
+                      </div>
+                      <div>
+                        <label>Min Quantity</label>
+                        <input type="number" value="${tier.min_quantity || 0}" data-tier="min_quantity" data-tier-idx="${tierIdx}" data-index="${index}" ${currentStage === 'production' ? 'readonly' : ''}>
+                      </div>
+                    </div>
+                  `).join('') || '<p style="color:#718096;text-align:center;padding:0.5rem;">No tiers defined. Click "Add Tier" to create one.</p>'}
+                </div>
+                ${currentStage === 'demo' ? `
+                  <button type="button" class="btn btn-success" onclick="addTier(${index})" style="margin-top:0.5rem;font-size:0.813rem;padding:0.5rem 1rem;">+ Add Tier</button>
+                ` : ''}
+              </div>
+
+              ${currentStage === 'demo' ? `
+                <!-- Collapsible Instructions Section -->
+                <div class="instructions-toggle" onclick="toggleInstructions(${index})">
+                  <span>📝 Field-Specific Guidance & Instructions</span>
+                  <span class="toggle-icon">▼</span>
+                </div>
+                <div id="instructions-${index}" class="instructions-content">
+                  <div style="display:grid;gap:1rem;">
+                    <div>
+                      <label style="font-weight:600;color:#2d3748;">📍 Item Name - Where to find?</label>
+                      <textarea data-instruction="item_name" data-index="${index}" placeholder="e.g., Look for product/service name in Schedule A">${esc(schedule.instruction_item_name || '')}</textarea>
+                    </div>
+                    <div>
+                      <label style="font-weight:600;color:#2d3748;">📍 Description - Where to find?</label>
+                      <textarea data-instruction="description" data-index="${index}" placeholder="e.g., Additional details section, look for community/location names">${esc(schedule.instruction_description || '')}</textarea>
+                    </div>
+                    <div>
+                      <label style="font-weight:600;color:#2d3748;">📍 Total Price - Where to find?</label>
+                      <textarea data-instruction="total_price" data-index="${index}" placeholder="e.g., Total Amount column, exclude taxes">${esc(schedule.instruction_total_price || '')}</textarea>
+                    </div>
+                    <div>
+                      <label style="font-weight:600;color:#2d3748;">📍 Billing Type - How to determine?</label>
+                      <textarea data-instruction="billing_type" data-index="${index}" placeholder="e.g., Flat unless per-unit or tiered pricing">${esc(schedule.instruction_billing_type || '')}</textarea>
+                    </div>
+                    <div>
+                      <label style="font-weight:600;color:#2d3748;">📍 Quantity - Where to find?</label>
+                      <textarea data-instruction="quantity" data-index="${index}" placeholder="e.g., Number of units/seats, typically 1 for flat pricing">${esc(schedule.instruction_quantity || '')}</textarea>
+                    </div>
+                    <div>
+                      <label style="font-weight:600;color:#2d3748;">📍 Start Date - Where to find?</label>
+                      <textarea data-instruction="start_date" data-index="${index}" placeholder="e.g., Effective Date or Service Start Date">${esc(schedule.instruction_start_date || '')}</textarea>
+                    </div>
+                    <div>
+                      <label style="font-weight:600;color:#2d3748;">📍 Frequency - Where to find?</label>
+                      <textarea data-instruction="frequency_unit" data-index="${index}" placeholder="e.g., Monthly, Quarterly, Annual billing">${esc(schedule.instruction_frequency_unit || '')}</textarea>
+                    </div>
+                    <div>
+                      <label style="font-weight:600;color:#2d3748;">📍 # Periods - Where to find?</label>
+                      <textarea data-instruction="periods" data-index="${index}" placeholder="e.g., Number of billing cycles">${esc(schedule.instruction_periods || '')}</textarea>
+                    </div>
+                    <div>
+                      <label style="font-weight:600;color:#2d3748;">📍 Months of Service - Where to find?</label>
+                      <textarea data-instruction="months_of_service" data-index="${index}" placeholder="e.g., Contract term (12, 24, 36 months)">${esc(schedule.instruction_months_of_service || '')}</textarea>
+                    </div>
+                    <div>
+                      <label style="font-weight:600;color:#2d3748;">📍 Net Terms - Where to find?</label>
+                      <textarea data-instruction="net_terms" data-index="${index}" placeholder="e.g., Net 30, Net 60, Due on receipt">${esc(schedule.instruction_net_terms || '')}</textarea>
+                    </div>
+                    <div>
+                      <label style="font-weight:600;color:#2d3748;">📍 Billing Timing - Where to find?</label>
+                      <textarea data-instruction="billing_timing" data-index="${index}" placeholder="e.g., Billed in advance / arrears / usage-based">${esc(schedule.instruction_billing_timing || '')}</textarea>
+                    </div>
+                    <div>
+                      <label style="font-weight:600;color:#2d3748;">📍 Event to Track - Where to find?</label>
+                      <textarea data-instruction="event_to_track" data-index="${index}" placeholder="Usually: item name + ' overage'">${esc(schedule.instruction_event_to_track || '')}</textarea>
+                    </div>
+                </div>
+              </div>
+
+              <div class="actions">
+                  <button type="button" class="btn btn-success" onclick="applyCorrections(${index})">💾 Save Item Changes</button>
+                <button type="button" class="btn" style="background:#718096;color:white;" onclick="copyJSON(${index})">📋 Copy JSON</button>
+                  <button type="button" class="btn" style="background:#e53e3e;color:white;" onclick="deleteSchedule(${index})">🗑️ Delete Schedule</button>
+              </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+
+        results.appendChild(item);
+      });
+    }
+    
+    function toggleInstructions(index) {
+      const content = document.getElementById(`instructions-${index}`);
+      const toggle = content.previousElementSibling;
+      content.classList.toggle('show');
+      toggle.classList.toggle('open');
+    }
+
+    function esc(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function applyCorrections(index) {
+      // Save regular fields and instructions
+      const inputs = document.querySelectorAll(`[data-index="${index}"]`);
+      inputs.forEach(input => {
+        const field = input.getAttribute('data-field');
+        const instruction = input.getAttribute('data-instruction');
+        
+        if (field && field !== 'frequency_display') {
+          let value = input.value;
+          if (input.type === 'number') {
+            value = parseFloat(value) || 0;
+          } else if (input.tagName === 'SELECT') {
+            value = input.value;
+          } else if (input.tagName === 'TEXTAREA') {
+            value = input.value;
+          }
+          
+          // Handle billing_timing specially (convert to arrears boolean)
+          if (field === 'billing_timing') {
+            currentData.schedules[index].billing_timing = value;
+            currentData.schedules[index].arrears = (value === 'last');
+          } else {
+            currentData.schedules[index][field] = value;
+          }
+        }
+        
+        if (instruction) {
+          currentData.schedules[index][`instruction_${instruction}`] = input.value.trim();
+        }
+      });
+      
+      // Save tier data
+      const tierInputs = document.querySelectorAll(`[data-tier][data-index="${index}"]`);
+      const tiers = {};
+      tierInputs.forEach(input => {
+        const tierField = input.getAttribute('data-tier');
+        const tierIdx = parseInt(input.getAttribute('data-tier-idx'));
+        
+        if (!tiers[tierIdx]) {
+          tiers[tierIdx] = {};
+        }
+        
+        let value = input.value;
+        if (input.type === 'number') {
+          value = parseFloat(value) || 0;
+        }
+        tiers[tierIdx][tierField] = value;
+      });
+      
+      // Update tiers array
+      if (Object.keys(tiers).length > 0) {
+        currentData.schedules[index].tiers = Object.values(tiers);
+      }
+      
+      showStatus('success', `✅ Changes and instructions saved for item ${index + 1}`);
+    }
+    
+    // Show confirmation modal
+    function saveDemoSession() {
+      console.log('=== saveDemoSession called ===');
+      console.log('currentMerchantId:', currentMerchantId);
+      console.log('currentData:', currentData);
+      
+      if (!currentMerchantId) {
+        showStatus('error', '❌ No merchant selected');
+        return;
+      }
+      
+      if (!currentData || !currentData.schedules || currentData.schedules.length === 0) {
+        showStatus('error', '❌ No data to save');
+        return;
+      }
+      
+      // Show confirmation modal
+      const modal = document.getElementById('confirmationModal');
+      modal.classList.add('show');
+    }
+    
+    function closeConfirmation() {
+      const modal = document.getElementById('confirmationModal');
+      modal.classList.remove('show');
+    }
+    
+    // Actually save after confirmation
+    async function confirmSave() {
+      closeConfirmation();
+      
+      if (!currentMerchantId) {
+        showStatus('error', '❌ No merchant selected');
+        return;
+      }
+      
+      if (!currentData || !currentData.schedules || currentData.schedules.length === 0) {
+        showStatus('error', '❌ No data to save');
+        return;
+      }
+      
+      // First apply any pending corrections
+      currentData.schedules.forEach((_, index) => {
+        const inputs = document.querySelectorAll(`[data-index="${index}"]`);
+        inputs.forEach(input => {
+          const field = input.getAttribute('data-field');
+          const instruction = input.getAttribute('data-instruction');
+          
+          if (field && field !== 'frequency_display') {
+        let value = input.value;
+        if (input.type === 'number') value = parseFloat(value) || 0;
+        currentData.schedules[index][field] = value;
+          }
+          
+          if (instruction) {
+            currentData.schedules[index][`instruction_${instruction}`] = input.value.trim();
+          }
+        });
+      });
+      
+      const demoSession = {
+        merchant_id: currentMerchantId,
+        created_at: new Date().toISOString(),
+        pdf_session_id: currentData.pdf_session_id, // Include PDF session ID so backend can save the PDF
+        schedules: currentData.schedules.map(s => ({
+          // Corrected values (final ground truth)
+          item_name: s.item_name,
+          description: s.description,
+          total_price: s.total_price,
+          billing_type: s.billing_type,
+          quantity: s.quantity,
+          start_date: s.start_date,
+          frequency_unit: s.frequency_unit,
+          frequency_every: s.frequency_every,
+          periods: s.periods,
+          months_of_service: s.months_of_service,
+          net_terms: s.net_terms,
+          billing_timing: s.billing_timing,
+          arrears: s.arrears,
+          event_to_track: s.event_to_track,
+          tiers: s.tiers || [],
+          
+          // Original AI extraction (before corrections) - for tracking what was wrong
+          original_ai_extraction: s.original_ai_extraction || null,
+          
+          // Instructions for finding these fields
+          instruction_item_name: s.instruction_item_name || '',
+          instruction_description: s.instruction_description || '',
+          instruction_total_price: s.instruction_total_price || '',
+          instruction_billing_type: s.instruction_billing_type || '',
+          instruction_quantity: s.instruction_quantity || '',
+          instruction_start_date: s.instruction_start_date || '',
+          instruction_frequency_unit: s.instruction_frequency_unit || '',
+          instruction_periods: s.instruction_periods || '',
+          instruction_months_of_service: s.instruction_months_of_service || '',
+          instruction_net_terms: s.instruction_net_terms || '',
+          instruction_billing_timing: s.instruction_billing_timing || '',
+          instruction_event_to_track: s.instruction_event_to_track || '',
+          
+          // Keep evidence for reference
+          evidence: s.evidence || [],
+          
+          // Keep extraction reasoning from AI
+          extraction_reasoning: s.extraction_reasoning || ''
+        })),
+        system_prompt_used: currentData.system_prompt
+        // Note: garage_revenue_schedules will be regenerated on backend from corrected schedules
+      };
+      
+      console.log('Sending demo session:', demoSession);
+      
+      try {
+        const res = await fetch('/api/save-demo-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(demoSession)
+        });
+        
+        console.log('Response status:', res.status);
+        const responseData = await res.json();
+        console.log('Response data:', responseData);
+        
+        if (res.ok) {
+          showStatus('success', `✅ Demo session saved for ${currentMerchantId}! (${responseData.schedules_count} schedules)`);
+          // Reload merchants to update the list
+          await loadMerchants();
+        } else {
+          throw new Error(responseData.error || 'Save failed');
+        }
+      } catch (error) {
+        console.error('Save error:', error);
+        showStatus('error', '❌ Failed to save demo session: ' + error.message);
+      }
+    }
+
+    function copyJSON(index) {
+      navigator.clipboard.writeText(JSON.stringify(currentData.schedules[index], null, 2))
+        .then(() => showStatus('success', '✅ Copied'))
+        .catch(() => showStatus('error', '❌ Copy failed'));
+    }
+
+    // Add a new blank revenue schedule (Demo mode only)
+    function addNewSchedule() {
+      if (currentStage !== 'demo') {
+        showStatus('error', '❌ Can only add schedules in Demo mode');
+        return;
+      }
+      
+      // Create a blank schedule
+      const newSchedule = {
+        item_name: '',
+        description: '',
+        total_price: 0,
+        billing_type: 'Flat price',
+        quantity: 1,
+        start_date: '',
+        frequency_unit: 'Month(s)',
+        frequency_every: 1,
+        periods: 1,
+        months_of_service: 12,
+        net_terms: 0,
+        billing_timing: 'first',
+        arrears: false,
+        event_to_track: '',
+        tiers: [],
+        evidence: [],
+        // Empty instructions
+        instruction_item_name: '',
+        instruction_total_price: '',
+        instruction_billing_type: '',
+        instruction_quantity: '',
+        instruction_start_date: '',
+        instruction_frequency_unit: '',
+        instruction_periods: '',
+        instruction_months_of_service: '',
+        instruction_net_terms: '',
+        instruction_billing_timing: '',
+        instruction_event_to_track: ''
+      };
+      
+      // Add to current data
+      if (!currentData) {
+        currentData = { schedules: [], pdf_session_id: null };
+      }
+      
+      if (!currentData.schedules) {
+        currentData.schedules = [];
+      }
+      
+      currentData.schedules.push(newSchedule);
+      
+      // Re-render
+      renderResults(currentData);
+      
+      // Scroll to the new schedule
+      setTimeout(() => {
+        const newIndex = currentData.schedules.length - 1;
+        const newScheduleEl = document.getElementById(`schedule-${newIndex}`);
+        if (newScheduleEl) {
+          newScheduleEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+      
+      showStatus('success', `✅ Added new revenue schedule #${currentData.schedules.length}`);
+    }
+    
+    // Delete a revenue schedule (Demo mode only)
+    function deleteSchedule(index) {
+      if (currentStage !== 'demo') {
+        showStatus('error', '❌ Can only delete schedules in Demo mode');
+        return;
+      }
+      
+      if (!currentData || !currentData.schedules || currentData.schedules.length === 0) {
+        showStatus('error', '❌ No schedules to delete');
+        return;
+      }
+      
+      if (index < 0 || index >= currentData.schedules.length) {
+        showStatus('error', '❌ Invalid schedule index');
+        return;
+      }
+      
+      const itemName = currentData.schedules[index].item_name || 'Unnamed Item';
+      
+      if (confirm(`Are you sure you want to delete "${itemName}"?\n\nThis will remove it from the training session when you save.`)) {
+        // Remove the schedule
+        currentData.schedules.splice(index, 1);
+        
+        // Re-render
+        renderResults(currentData);
+        
+        showStatus('success', `✅ Deleted "${itemName}"`);
+      }
+    }
+
+    function viewPDF(sessionId) {
+      if (!sessionId) {
+        showStatus('error', '❌ PDF not available');
+        return;
+      }
+      // Open PDF in inline modal
+      const modal = document.getElementById('pdfModal');
+      const iframe = document.getElementById('pdfViewer');
+      iframe.src = `/api/view-pdf/${sessionId}`;
+      modal.classList.add('show');
+      document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    }
+    
+    function closePDFModal(event) {
+      if (event && event.target !== event.currentTarget && !event.target.classList.contains('pdf-modal-close')) {
+        return; // Don't close if clicking inside modal content
+      }
+      const modal = document.getElementById('pdfModal');
+      const iframe = document.getElementById('pdfViewer');
+      modal.classList.remove('show');
+      iframe.src = ''; // Clear iframe
+      document.body.style.overflow = ''; // Restore scrolling
+    }
+    
+    // Calculate end date from start date + months (for rendering)
+    function calculateEndDate(startDate, months) {
+      if (!startDate) return '';
+      const start = new Date(startDate);
+      if (isNaN(start.getTime())) return '';
+      const end = new Date(start);
+      end.setMonth(end.getMonth() + (parseInt(months) || 12));
+      return end.toISOString().split('T')[0];
+    }
+    
+    // Event handler version that updates the UI
+    window.calculateEndDate = function(index) {
+      const startInput = document.querySelector(`[data-field="start_date"][data-index="${index}"]`);
+      const monthsInput = document.querySelector(`[data-field="months_of_service"][data-index="${index}"]`);
+      const endInput = document.getElementById(`calc-end-${index}`);
+      
+      if (!startInput || !monthsInput || !endInput) return;
+      
+      const startDate = startInput.value;
+      const months = parseInt(monthsInput.value) || 12;
+      
+      if (startDate) {
+        const calculatedEnd = calculateEndDate(startDate, months);
+        endInput.value = calculatedEnd;
+        
+        // Update in currentData
+        if (currentData && currentData.schedules[index]) {
+          currentData.schedules[index].calculated_end_date = calculatedEnd;
+        }
+      }
+    };
+    
+    // Toggle billing-type-specific fields (event to track, tier pricing)
+    function toggleBillingFields(index) {
+      const billingTypeSelect = document.querySelector(`[data-field="billing_type"][data-index="${index}"]`);
+      const billingType = billingTypeSelect ? billingTypeSelect.value : 'Flat price';
+      
+      // Show/hide Event to Track
+      const eventSection = document.getElementById(`event-track-${index}`);
+      if (eventSection) {
+        eventSection.style.display = (billingType !== 'Flat price') ? 'grid' : 'none';
+        
+        // Auto-populate event to track if empty
+        if (billingType !== 'Flat price') {
+          const eventInput = eventSection.querySelector(`[data-field="event_to_track"]`);
+          const itemInput = document.querySelector(`[data-field="item_name"][data-index="${index}"]`);
+          if (eventInput && itemInput && !eventInput.value.trim()) {
+            eventInput.value = itemInput.value + ' overage';
+          }
+        }
+      }
+      
+      // Show/hide Tier Pricing
+      const tierSection = document.getElementById(`tier-section-${index}`);
+      if (tierSection) {
+        const showTiers = (billingType === 'Tier flat price' || billingType === 'Tier unit price');
+        tierSection.style.display = showTiers ? 'block' : 'none';
+      }
+      
+      // Update in currentData
+      if (currentData && currentData.schedules[index]) {
+        currentData.schedules[index].billing_type = billingType;
+      }
+    }
+    
+    // Add new tier to tier pricing
+    function addTier(index) {
+      if (!currentData || !currentData.schedules[index]) return;
+      
+      if (!currentData.schedules[index].tiers) {
+        currentData.schedules[index].tiers = [];
+      }
+      
+      const tierIdx = currentData.schedules[index].tiers.length;
+      const newTier = {
+        tier_name: `Tier ${tierIdx + 1}`,
+        price: 0,
+        applied_when: '',
+        min_quantity: 0
+      };
+      
+      currentData.schedules[index].tiers.push(newTier);
+      
+      // Re-render just this tier
+      const container = document.getElementById(`tiers-container-${index}`);
+      const billingType = currentData.schedules[index].billing_type;
+      
+      if (container) {
+        const tierHtml = `
+          <div class="form-row" style="background:white;padding:0.75rem;border-radius:4px;margin-bottom:0.5rem;border:1px solid #e2e8f0;">
+            <div>
+              <label>Tier ${tierIdx + 1} Name</label>
+              <input type="text" value="${newTier.tier_name}" data-tier="tier_name" data-tier-idx="${tierIdx}" data-index="${index}">
+            </div>
+            <div>
+              <label>Price ${billingType === 'Tier unit price' ? '(per unit)' : '(flat)'}</label>
+              <input type="number" step="0.01" value="${newTier.price}" data-tier="price" data-tier-idx="${tierIdx}" data-index="${index}">
+            </div>
+            <div>
+              <label>Applied When (condition)</label>
+              <input type="text" value="${newTier.applied_when}" data-tier="applied_when" data-tier-idx="${tierIdx}" data-index="${index}" placeholder="e.g., 0-10, 10+">
+            </div>
+            <div>
+              <label>Min Quantity</label>
+              <input type="number" value="${newTier.min_quantity}" data-tier="min_quantity" data-tier-idx="${tierIdx}" data-index="${index}">
+            </div>
+          </div>
+        `;
+        
+        // Remove "no tiers" message if exists
+        const noTiersMsg = container.querySelector('p');
+        if (noTiersMsg) noTiersMsg.remove();
+        
+        container.insertAdjacentHTML('beforeend', tierHtml);
+        showStatus('success', `✅ Tier ${tierIdx + 1} added`);
+      }
+    }
+    
+    // Initialize
+    loadMerchants();
+    handleStageChange();
+  </script>
+</body>
+</html>
