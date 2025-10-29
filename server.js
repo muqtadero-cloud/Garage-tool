@@ -23,6 +23,7 @@ import {
   getTrainingContractPath,
   hasTrainingContract,
   getMerchant,
+  ensureMerchant,
   updateMerchantTabsCredentials,
   updateMerchantTier
 } from './lib/merchant.js';
@@ -604,6 +605,26 @@ app.get('/api/view-pdf/:sessionId', (req, res) => {
     res.sendFile(path.resolve(pdfPath));
   } catch (err) {
     res.status(500).json({ error: 'Failed to load PDF', debug: { message: err?.message } });
+  }
+});
+
+// Ensure merchant exists (creates if needed)
+app.post('/api/merchant/ensure', express.json(), (req, res) => {
+  try {
+    const { merchantId } = req.body;
+    if (!merchantId) return res.status(400).json({ error: 'merchantId required' });
+    
+    ensureMerchant(merchantId);
+    const merchant = getMerchant(merchantId);
+    
+    res.json({ 
+      success: true, 
+      merchant,
+      message: `Merchant ${merchantId} ensured` 
+    });
+  } catch (err) {
+    console.error('Ensure merchant error:', err);
+    res.status(500).json({ error: 'Failed to ensure merchant' });
   }
 });
 

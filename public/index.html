@@ -1493,6 +1493,9 @@
         <select id="merchantSelect" class="merchant-dropdown" onchange="handleMerchantChange()">
           <option value="">Select merchant...</option>
         </select>
+        <div id="currentMerchantIndicator" style="margin-top:0.5rem;padding:0.5rem;background:#1a1a2e;border-radius:6px;font-size:0.85rem;color:#00d9ff;display:none;">
+          <strong>Active:</strong> <span id="currentMerchantName"></span>
+        </div>
       </div>
       
       <div class="sidebar-divider"></div>
@@ -1891,7 +1894,7 @@
     const landingNewMerchantContainer = document.getElementById('landingNewMerchantContainer');
     
     // Start Processing - Transition from landing to main app
-    function startProcessing() {
+    async function startProcessing() {
       const selectedMerchant = landingMerchantSelect.value;
       
       if (selectedMerchant === '__new__') {
@@ -1901,6 +1904,20 @@
           return;
         }
         currentMerchantId = newMerchantName.replace(/[^a-zA-Z0-9_-]/g, '_');
+        
+        // Ensure the merchant exists in the database immediately
+        try {
+          const res = await fetch('/api/merchant/ensure', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ merchantId: currentMerchantId })
+          });
+          if (!res.ok) {
+            console.error('Failed to create merchant:', await res.text());
+          }
+        } catch (err) {
+          console.error('Error creating merchant:', err);
+        }
       } else if (selectedMerchant) {
         currentMerchantId = selectedMerchant;
       } else {
@@ -1918,8 +1935,25 @@
       // Set the selected merchant in the dropdown
       document.getElementById('merchantSelect').value = currentMerchantId;
       
+      // Update merchant indicator
+      updateMerchantIndicator();
+      
       // Initialize the stage
       handleStageChange();
+    }
+    
+    // Update merchant indicator in sidebar
+    function updateMerchantIndicator() {
+      const indicator = document.getElementById('currentMerchantIndicator');
+      const nameSpan = document.getElementById('currentMerchantName');
+      
+      if (currentMerchantId) {
+        const displayName = currentMerchantId.replace(/_/g, ' ');
+        nameSpan.textContent = displayName;
+        indicator.style.display = 'block';
+      } else {
+        indicator.style.display = 'none';
+      }
     }
     
     // Toggle sidebar collapse
@@ -1941,6 +1975,9 @@
       
       // Reset merchant selection
       currentMerchantId = null;
+      
+      // Hide merchant indicator
+      updateMerchantIndicator();
       
       // Show landing page, hide main app
       document.getElementById('landingPage').style.display = 'flex';
@@ -1972,6 +2009,9 @@
       
       // Update current merchant
       currentMerchantId = newMerchantId;
+      
+      // Update merchant indicator
+      updateMerchantIndicator();
       
       // Reload guidance for new merchant
       handleStageChange();
@@ -2954,7 +2994,7 @@
       closeConfirmation();
       
       if (!currentMerchantId) {
-        showStatus('error', '❌ No merchant selected');
+        showStatus('error', '❌ No merchant selected. Please go back to the landing page and select/create a merchant first.');
         return;
       }
       
