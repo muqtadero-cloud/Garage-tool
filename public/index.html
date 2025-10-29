@@ -4,28 +4,131 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Garage Contract Assistant</title>
+  
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
+  
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #f5f7fa;
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', sans-serif;
+      background: var(--bg-main);
       margin: 0;
-      line-height: 1.6;
+      line-height: 1.5;
       display: flex;
-      height: 100vh;
-      overflow: hidden;
+      min-height: 100vh;
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
     
-    /* Sidebar */
+    /* Sidebar - Modern & Clean with Collapse */
     .sidebar {
-      width: 300px;
-      background: #2d3748;
-      color: white;
-      padding: 1.5rem;
+      width: 320px;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--sidebar-border);
+      padding: 0;
       overflow-y: auto;
-      box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+      box-shadow: var(--shadow-sm);
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .sidebar.collapsed {
+      width: 70px;
+    }
+    
+    .sidebar.collapsed .brand-text {
+      display: none;
+    }
+    
+    .sidebar.collapsed #uploadForm {
+      display: none !important;
+    }
+    
+    .sidebar.collapsed .sidebar-collapse-btn i {
+      transform: rotate(180deg);
+    }
+    
+    /* Sidebar Header - Netflix Style */
+    .sidebar-header {
+      padding: 1.25rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-card);
+    }
+    
+    .sidebar.collapsed .sidebar-header {
+      flex-direction: column;
+      gap: 0.75rem;
+      padding: 1rem 0.5rem;
+    }
+    
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      padding: 0.5rem;
+      border-radius: 8px;
+    }
+    
+    .sidebar.collapsed .sidebar-brand {
+      padding: 0.375rem;
+    }
+    
+    .sidebar-brand:hover {
+      background: var(--bg-subtle);
+    }
+    
+    .brand-icon {
+      font-size: 1.5rem;
+      line-height: 1;
+    }
+    
+    .brand-text {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+      transition: opacity 0.2s;
+      white-space: nowrap;
+    }
+    
+    .sidebar-collapse-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.375rem 0.5rem;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .sidebar-collapse-btn:hover {
+      background: var(--bg-subtle);
+      border-color: var(--border-hover);
+      color: var(--text-primary);
+    }
+    
+    .sidebar-collapse-btn i {
+      font-size: 1rem;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    #uploadForm {
+      padding: 1.5rem 1.25rem;
     }
     
     .sidebar h2 {
@@ -82,12 +185,15 @@
     .main-content {
       flex: 1;
       overflow-y: auto;
-      padding: 2rem;
+      padding: 1.5rem;
+      width: 100%;
     }
     
     .container {
-      max-width: 1200px;
-      margin: 0 auto;
+      max-width: none;
+      width: 100%;
+      margin: 0;
+      padding: 0;
     }
     
     h1 {
@@ -151,9 +257,15 @@
     }
     
     textarea {
-      min-height: 70px;
+      min-height: 80px;
       resize: vertical;
       font-family: inherit;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: var(--shadow-sm);
+    }
+    
+    textarea:hover {
+      border-color: var(--border-hover);
     }
     
     .btn {
@@ -212,34 +324,41 @@
     }
     
     .schedule-header {
-      padding: 1rem 1.25rem;
+      padding: 0.875rem 1rem;
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 0.875rem;
-      background: #f7fafc;
-      border-bottom: 1px solid #e2e8f0;
+      gap: 0.75rem;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s ease;
     }
     
     .schedule-header:hover {
-      background: #edf2f7;
+      background: var(--bg-subtle);
     }
     
-    .toggle-icon {
+    .schedule-header .toggle-icon {
       width: 24px;
       height: 24px;
-      background: #4299e1;
-      color: white;
-      border-radius: 4px;
+      background: transparent;
+      color: var(--text-secondary);
+      border-radius: 6px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.875rem;
-      transition: transform 0.2s;
+      font-size: 1.125rem;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .schedule-header:hover .toggle-icon {
+      background: var(--bg-subtle);
+      color: var(--primary);
     }
     
     .schedule-item.open .toggle-icon {
       transform: rotate(90deg);
+      color: var(--primary);
     }
     
     .schedule-info {
@@ -248,19 +367,20 @@
     
     .schedule-name {
       font-weight: 600;
-      color: #2d3748;
-      margin-bottom: 0.25rem;
+      color: var(--text-primary);
+      font-size: 0.875rem;
+      margin-bottom: 0.125rem;
     }
     
     .schedule-meta {
-      font-size: 0.813rem;
-      color: #718096;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
     }
     
     .badge {
-      padding: 0.25rem 0.625rem;
+      padding: 0.25rem 0.5rem;
       border-radius: 4px;
-      font-size: 0.75rem;
+      font-size: 0.688rem;
       font-weight: 600;
     }
     
@@ -284,32 +404,40 @@
     }
     
     .section-title {
-      font-size: 0.875rem;
+      font-size: 0.938rem;
       font-weight: 600;
-      color: #2d3748;
+      color: var(--text-primary);
       margin-bottom: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: -0.01em;
     }
     
     .evidence-box {
-      background: #f7fafc;
-      border-left: 3px solid #4299e1;
-      padding: 0.875rem 1rem;
-      margin-bottom: 0.75rem;
-      border-radius: 4px;
+      background: var(--bg-card);
+      border-left: 3px solid var(--primary);
+      padding: 1rem 1.25rem;
+      margin-bottom: 0.875rem;
+      border-radius: 8px;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .evidence-box:hover {
+      box-shadow: var(--shadow-md);
+      border-left-color: var(--primary-hover);
     }
     
     .evidence-header {
-      font-size: 0.75rem;
-      color: #4299e1;
-      font-weight: 600;
-      margin-bottom: 0.375rem;
+      font-size: 0.813rem;
+      color: var(--primary);
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.01em;
     }
     
     .evidence-text {
       font-size: 0.875rem;
-      color: #2d3748;
+      color: var(--text-primary);
+      line-height: 1.6;
     }
     
     .reasoning-box {
@@ -339,8 +467,8 @@
     
     /* Field Guidance */
     .field-guidance {
-      background: #fffaf0;
-      border: 1px solid #fbd38d;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
       border-radius: 8px;
       padding: 1.5rem;
       margin-top: 1.5rem;
@@ -348,7 +476,7 @@
     
     .guidance-header {
       font-weight: 600;
-      color: #744210;
+      color: var(--text-primary);
       margin-bottom: 1rem;
     }
     
@@ -358,7 +486,7 @@
     }
     
     .guidance-item label {
-      color: #744210;
+      color: var(--text-secondary);
     }
     
     .actions {
@@ -370,24 +498,25 @@
     }
     
     .stage-badge {
-      padding: 0.5rem 1rem;
-      border-radius: 6px;
-      font-weight: 600;
+      padding: 0.625rem 1rem;
+      border-radius: 8px;
+      font-weight: 500;
       font-size: 0.875rem;
       text-align: center;
       margin-bottom: 1rem;
+      letter-spacing: -0.01em;
     }
     
     .stage-demo {
-      background: #fef5e7;
-      color: #d68910;
-      border: 2px solid #f39c12;
+      background: #eff6ff;
+      color: #3b82f6;
+      border: 1px solid #93c5fd;
     }
     
     .stage-production {
-      background: #d5f4e6;
-      color: #186a3b;
-      border: 2px solid #27ae60;
+      background: #f0fdf4;
+      color: #166534;
+      border: 1px solid #86efac;
     }
     
     .instruction-field {
@@ -395,58 +524,94 @@
     }
     
     .instruction-field label {
-      font-size: 0.75rem;
-      color: #d68910;
-      font-weight: 600;
+      font-size: 0.813rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      letter-spacing: -0.01em;
     }
     
     .instruction-field textarea {
-      font-size: 0.813rem;
-      min-height: 50px;
-      background: #fffbf0;
-      border: 1px solid #f39c12;
+      font-size: 0.875rem;
+      min-height: 60px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .instruction-field textarea:hover {
+      border-color: var(--border-hover);
+    }
+    
+    .instruction-field textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
     }
     
     .read-only-view {
-      pointer-events: none;
+      opacity: 0.85;
+    }
+    
+    /* Production Mode - Readonly but Selectable */
+    input[readonly], textarea[readonly] {
+      background: var(--bg-subtle) !important;
+      border-color: var(--border) !important;
+      color: var(--text-primary) !important;
+      cursor: text !important;
+      user-select: text !important;
+      -webkit-user-select: text !important;
+    }
+    
+    input[readonly]:focus, textarea[readonly]:focus {
+      outline: 1px solid var(--border-hover);
+      border-color: var(--border-hover) !important;
+    }
+    
+    select[disabled] {
+      background: var(--bg-subtle) !important;
+      color: var(--text-primary) !important;
       opacity: 0.8;
+      cursor: not-allowed !important;
     }
     
     .save-demo-btn {
-      background: #f39c12;
+      background: var(--primary);
       color: white;
       font-size: 0.813rem;
       padding: 0.5rem 1rem;
     }
     
     .save-demo-btn:hover {
-      background: #d68910;
+      background: var(--primary-hover);
     }
     
-    /* Floating Action Buttons */
-    .floating-actions {
+    /* Bottom Action Buttons */
+    .bottom-actions {
       position: fixed;
-      top: 1rem;
-      right: 1rem;
+      bottom: 2rem;
+      right: 2rem;
       display: flex;
-      gap: 0.5rem;
+      gap: 0.875rem;
       z-index: 100;
     }
     
-    .floating-btn {
-      padding: 0.5rem 0.875rem;
-      border: none;
-      border-radius: 6px;
-      font-size: 0.813rem;
-      font-weight: 500;
-      cursor: pointer;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      transition: all 0.2s;
+    .bottom-actions .btn {
+      box-shadow: var(--shadow-lg);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(10px);
+      padding: 0.75rem 1.5rem;
+      font-size: 0.938rem;
     }
     
-    .floating-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    .bottom-actions .btn:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-xl);
+    }
+    
+    .bottom-actions .btn:active {
+      transform: translateY(-1px);
     }
     
     /* Confirmation Modal */
@@ -477,7 +642,7 @@
     
     .confirmation-content h3 {
       margin: 0 0 1rem 0;
-      color: #d68910;
+      color: var(--text-primary);
       font-size: 1.25rem;
     }
     
@@ -494,46 +659,86 @@
     }
     
     /* Collapsible Instructions Section */
+    /* Sleek Netflix-Style Collapsible Section */
     .instructions-toggle {
-      margin: 1rem 0 0.5rem 0;
+      margin: 0.75rem 0 0 0;
       padding: 0.75rem 1rem;
-      background: #f7fafc;
-      border: 2px dashed #cbd5e0;
-      border-radius: 6px;
+      background: transparent;
+      border: none;
+      border-radius: 8px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      transition: all 0.2s;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+    
+    .instructions-toggle::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 0;
+      background: var(--primary);
+      border-radius: 2px;
+      transition: height 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
     .instructions-toggle:hover {
-      background: #edf2f7;
-      border-color: #a0aec0;
+      background: var(--bg-subtle);
+    }
+    
+    .instructions-toggle:hover::before {
+      height: 60%;
     }
     
     .instructions-toggle span {
-      font-weight: 600;
-      color: #4a5568;
-      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      font-size: 0.875rem;
+      letter-spacing: -0.01em;
     }
     
     .instructions-toggle .toggle-icon {
-      font-size: 1.25rem;
-      transition: transform 0.2s;
+      font-size: 1rem;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      color: var(--text-secondary);
+      line-height: 1;
+      display: flex;
+      align-items: center;
+    }
+    
+    .instructions-toggle .toggle-icon i {
+      font-size: 1.125rem;
+      font-weight: 600;
     }
     
     .instructions-toggle.open .toggle-icon {
       transform: rotate(180deg);
+      color: var(--primary);
     }
     
     .instructions-content {
       display: none;
       margin-top: 0.5rem;
-      padding: 1rem;
-      background: #f8f9fa;
-      border-radius: 6px;
-      border-left: 3px solid #d68910;
+      padding: 0;
+      background: transparent;
+      border-radius: 8px;
+      animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
     
     .instructions-content.show {
@@ -562,11 +767,12 @@
     .pdf-modal-content {
       width: 90%;
       height: 90%;
-      background: white;
-      border-radius: 8px;
+      background: var(--bg-card);
+      border-radius: 16px;
       display: flex;
       flex-direction: column;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      box-shadow: var(--shadow-xl);
+      border: 1px solid var(--border);
     }
     
     .pdf-modal-header {
@@ -586,7 +792,7 @@
     }
     
     .pdf-modal-close {
-      background: #e53e3e;
+      background: #f87171;
       color: white;
       border: none;
       padding: 0.5rem 1rem;
@@ -611,14 +817,14 @@
       border: none;
     }
     
-    /* Landing Page */
+    /* Landing Page - Modern & Clean */
     .landing-page {
       min-height: 100vh;
       width: 100vw;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: var(--bg-subtle);
       padding: 2rem;
       position: fixed;
       top: 0;
@@ -627,37 +833,42 @@
     }
     
     .landing-container {
-      background: white;
+      background: var(--bg-card);
       border-radius: 16px;
       padding: 3rem 2.5rem;
-      max-width: 500px;
+      max-width: 480px;
       width: 100%;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      box-shadow: var(--shadow-xl);
       text-align: center;
+      border: 1px solid var(--border);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
     .landing-logo {
-      font-size: 4rem;
-      margin-bottom: 1rem;
+      font-size: 3.5rem;
+      margin-bottom: 1.25rem;
+      filter: drop-shadow(0 2px 8px rgba(0,0,0,0.1));
     }
     
     .landing-title {
-      font-size: 2rem;
+      font-size: 1.75rem;
       font-weight: 700;
-      color: #2d3748;
-      margin: 0 0 0.5rem 0;
+      color: var(--text-primary);
+      margin: 0 0 0.625rem 0;
+      letter-spacing: -0.02em;
     }
     
     .landing-subtitle {
-      font-size: 1rem;
-      color: #718096;
+      font-size: 0.938rem;
+      color: var(--text-secondary);
       margin: 0 0 2.5rem 0;
+      font-weight: 500;
     }
     
     .landing-form {
       display: flex;
       flex-direction: column;
-      gap: 1.5rem;
+      gap: 1.25rem;
     }
     
     .landing-select-group {
@@ -667,73 +878,564 @@
     .landing-select-group label {
       display: block;
       font-weight: 600;
-      color: #4a5568;
+      color: var(--text-primary);
       margin-bottom: 0.5rem;
-      font-size: 0.95rem;
+      font-size: 0.875rem;
     }
     
     .landing-select {
       width: 100%;
-      padding: 0.875rem 1rem;
-      border: 2px solid #e2e8f0;
-      border-radius: 8px;
-      font-size: 1rem;
-      color: #2d3748;
-      background: white;
-      transition: all 0.2s;
+      padding: 0.875rem 1.125rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.938rem;
+      color: var(--text-primary);
+      background: var(--bg-card);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       cursor: pointer;
+      box-shadow: var(--shadow-sm);
     }
     
     .landing-select:hover {
-      border-color: #cbd5e0;
+      border-color: var(--primary-light);
+      box-shadow: var(--shadow-md);
     }
     
     .landing-select:focus {
       outline: none;
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1), var(--shadow-sm);
     }
     
     .landing-start-btn {
-      padding: 1rem 2rem;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 1rem 1.75rem;
+      background: var(--primary);
       color: white;
       border: none;
-      border-radius: 8px;
-      font-size: 1.125rem;
+      border-radius: 10px;
+      font-size: 0.938rem;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.3s;
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+      letter-spacing: -0.01em;
     }
     
     .landing-start-btn:hover {
+      background: var(--primary-hover);
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+      box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
     }
     
     .landing-start-btn:active {
       transform: translateY(0);
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
     }
     
     .landing-start-btn:disabled {
       opacity: 0.5;
       cursor: not-allowed;
       transform: none;
+      box-shadow: var(--shadow-sm);
     }
     
     .landing-footer {
-      margin-top: 2rem;
-      font-size: 0.875rem;
-      color: #a0aec0;
+      margin-top: 1.5rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
     }
     
     .main-app {
       display: none;
+      width: 100%;
     }
     
     .main-app.active {
       display: flex;
+      width: 100%;
+    }
+    
+    /* High-End Professional Color Palette */
+    :root {
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --primary-light: #818cf8;
+      --success: #10b981;
+      --success-hover: #059669;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --bg-main: #f8fafc;
+      --bg-subtle: #f1f5f9;
+      --bg-card: #ffffff;
+      --border: #e2e8f0;
+      --border-hover: #cbd5e1;
+      --text-primary: #0f172a;
+      --text-secondary: #64748b;
+      --text-muted: #94a3b8;
+      --sidebar-bg: #ffffff;
+      --sidebar-border: #e2e8f0;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-size: 0.875rem;
+      color: var(--text-primary);
+      background: var(--bg-subtle);
+      line-height: 1.5;
+    }
+    
+    /* Modern Button System - High-End Feel */
+    .btn {
+      font-size: 0.875rem;
+      font-weight: 600;
+      border-radius: 8px;
+      padding: 0.625rem 1.25rem;
+      border: 1px solid transparent;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: var(--shadow-sm);
+      letter-spacing: -0.01em;
+    }
+    
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .btn:active {
+      transform: translateY(0);
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .btn-primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      border-color: var(--primary-hover);
+      color: white;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+    
+    .btn-outline-primary {
+      color: var(--primary);
+      border-color: var(--border);
+      background: var(--bg-card);
+    }
+    
+    .btn-outline-primary:hover {
+      background: var(--bg-subtle);
+      border-color: var(--primary);
+      color: var(--primary-hover);
+    }
+    
+    .btn-success {
+      background: var(--success);
+      border-color: var(--success);
+      color: white;
+    }
+    
+    .btn-success:hover {
+      background: var(--success-hover);
+      border-color: var(--success-hover);
+      color: white;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    
+    .btn-danger {
+      background: var(--danger);
+      border-color: var(--danger);
+      color: white;
+    }
+    
+    .btn-danger:hover {
+      background: #dc2626;
+      border-color: #dc2626;
+      color: white;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+    
+    .btn-sm {
+      font-size: 0.813rem;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+    }
+    
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .form-control, .form-select {
+      font-size: 0.875rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.625rem 0.875rem;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .form-control:hover, .form-select:hover {
+      border-color: var(--border-hover);
+    }
+    
+    .form-control:focus, .form-select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1), var(--shadow-sm);
+      outline: none;
+    }
+    
+    .form-control-sm, .form-select-sm {
+      font-size: 0.813rem;
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+    }
+    
+    .form-label {
+      font-size: 0.813rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.01em;
+    }
+    
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: none;
+      background: var(--bg-card);
+    }
+    
+    /* Custom button toggle for sidebar */
+    .btn-toggle-active {
+      background: var(--primary) !important;
+      color: white !important;
+      border-color: var(--primary) !important;
+    }
+    
+    .btn-toggle-inactive {
+      background: white !important;
+      color: var(--text-secondary) !important;
+      border-color: var(--border) !important;
+    }
+    
+    .btn-toggle-inactive:hover {
+      background: var(--bg-subtle) !important;
+      color: var(--text-primary) !important;
+    }
+    
+    /* Consistency toggle buttons */
+    .consistency-toggle-btn {
+      background: white;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+    
+    .consistency-toggle-btn:hover {
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+      border-color: var(--primary);
+    }
+    
+    .consistency-toggle-btn.consistency-active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    
+    .accordion-item {
+      border: 1px solid var(--border);
+      border-radius: 8px !important;
+      overflow: hidden;
+      margin-bottom: 0.75rem;
+    }
+    
+    .accordion-button {
+      font-size: 0.875rem;
+      font-weight: 600;
+      padding: 1rem 1.25rem;
+      background: var(--bg-card);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .accordion-button:hover {
+      background: var(--bg-subtle);
+      border-color: var(--border-hover);
+    }
+    
+    .accordion-button:not(.collapsed) {
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+      box-shadow: none;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+    
+    .accordion-button:focus {
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+      border-color: var(--primary);
+      outline: none;
+    }
+    
+    .accordion-body {
+      padding: 1.25rem;
+      font-size: 0.875rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-top: none;
+      border-bottom-left-radius: 8px;
+      border-bottom-right-radius: 8px;
+    }
+    
+    .badge {
+      font-size: 0.75rem;
+      padding: 0.375rem 0.625rem;
+      font-weight: 500;
+      border-radius: 6px;
+      letter-spacing: -0.01em;
+    }
+    
+    /* Clean Sidebar - Light Theme like Tabs */
+    .sidebar {
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border);
+      font-size: 0.75rem;
+    }
+    
+    .sidebar h2 {
+      color: var(--text-primary);
+      font-size: 1.125rem;
+      font-weight: 700;
+    }
+    
+    .sidebar-subtitle {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+    
+    .sidebar-section {
+      margin-bottom: 1.25rem;
+    }
+    
+    .sidebar-section label {
+      font-size: 0.813rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.01em;
+    }
+    
+    .sidebar input, .sidebar select {
+      font-size: 0.875rem;
+      padding: 0.625rem 0.875rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      border-radius: 8px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .sidebar input:hover, .sidebar select:hover {
+      border-color: var(--border-hover);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .sidebar input:focus, .sidebar select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+      outline: none;
+    }
+    
+    /* Merchant Dropdown - Premium Netflix Style */
+    .merchant-dropdown {
+      background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-subtle) 100%) !important;
+      border: 1px solid var(--primary) !important;
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15) !important;
+      font-weight: 600 !important;
+      color: var(--text-primary) !important;
+    }
+    
+    .merchant-dropdown:hover {
+      border-color: var(--primary-hover) !important;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25) !important;
+    }
+    
+    .merchant-dropdown:focus {
+      border-color: var(--primary) !important;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15), 0 4px 12px rgba(99, 102, 241, 0.2) !important;
+    }
+    
+    .sidebar-divider {
+      background: var(--border);
+      height: 1px;
+      margin: 1.25rem 0;
+    }
+    
+    /* Compact Main Content */
+    .main-content {
+      background: var(--bg-main);
+      padding: 2rem;
+      flex: 1;
+      width: 100%;
+    }
+    
+    .container {
+      max-width: none;
+      width: 100%;
+      margin: 0;
+      padding: 0 1rem;
+    }
+    
+    #results {
+      width: 100%;
+    }
+    
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+    
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+    
+    /* Professional Guidance Grid - Compact */
+    .guidance-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.875rem;
+    }
+    
+    @media (max-width: 1200px) {
+      .guidance-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .guidance-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .guidance-item {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .guidance-item label {
+      font-size: 0.813rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.01em;
+    }
+    
+    .guidance-item textarea, .guidance-item input, .guidance-item select {
+      font-size: 0.875rem;
+      padding: 0.625rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg-card);
+      color: var(--text-primary);
+      resize: vertical;
+      min-height: 70px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .guidance-item textarea:focus, 
+    .guidance-item input:focus,
+    .guidance-item select:focus {
+      border-color: var(--primary);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    /* Clean Alert Messages */
+    .alert {
+      font-size: 0.813rem;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      border: 1px solid;
+    }
+    
+    .alert-success {
+      background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+      border: 1px solid #86efac;
+      color: #166534;
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      box-shadow: var(--shadow-sm);
+      font-weight: 500;
+    }
+    
+    .alert-info {
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+      border: 1px solid #93c5fd;
+      color: #1e40af;
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      box-shadow: var(--shadow-sm);
+      font-weight: 500;
+    }
+    
+    .alert-error {
+      background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+      border: 1px solid #fca5a5;
+      color: #991b1b;
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      box-shadow: var(--shadow-sm);
+      font-weight: 500;
+    }
+    
+    /* Schedule Items - Clean Cards */
+    .schedule-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 1rem;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .schedule-item:hover {
+      box-shadow: var(--shadow-md);
+      border-color: var(--border-hover);
+    }
+    
+    .schedule-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-subtle);
+    }
+    
+    .schedule-content {
+      padding: 1rem;
+      background: var(--bg-card);
     }
   </style>
 </head>
@@ -773,28 +1475,24 @@
   <div class="main-app" id="mainApp">
   
   <!-- Sidebar -->
-  <div class="sidebar">
-    <h2>🚗 Garage Assistant</h2>
-    <p class="sidebar-subtitle">Configure & Extract</p>
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand" onclick="goToLanding()">
+        <span class="brand-icon">🚗</span>
+        <span class="brand-text">Garage</span>
+      </div>
+      <button type="button" class="sidebar-collapse-btn" onclick="toggleSidebar()">
+        <i class="bi bi-chevron-left" id="collapseIcon"></i>
+      </button>
+    </div>
     
-        <form id="uploadForm">
+    <form id="uploadForm">
+      <!-- Merchant Dropdown - Sleek Netflix Style -->
       <div class="sidebar-section">
-        <label>Stage</label>
-        <select id="stage" required onchange="handleStageChange()">
-          <option value="demo">🧪 Demo (Training)</option>
-          <option value="production">🚀 Production (Live)</option>
+        <label>Merchant</label>
+        <select id="merchantSelect" class="merchant-dropdown" onchange="handleMerchantChange()">
+          <option value="">Select merchant...</option>
         </select>
-            </div>
-      
-      <!-- Merchant is now selected on landing page, display it here -->
-      <div class="sidebar-section" style="background:#f7fafc;padding:0.75rem;border-radius:6px;border:2px solid #e2e8f0;">
-        <div style="display:flex;align-items:center;gap:0.5rem;">
-          <span style="font-size:1.25rem;">🏢</span>
-            <div>
-            <div style="font-size:0.75rem;color:#718096;font-weight:500;">MERCHANT</div>
-            <div id="currentMerchantDisplay" style="font-size:0.95rem;color:#2d3748;font-weight:700;">-</div>
-          </div>
-        </div>
       </div>
       
       <div class="sidebar-divider"></div>
@@ -802,11 +1500,25 @@
       <div class="sidebar-section">
               <label>Model</label>
               <select id="model">
-                <option value="o3" selected>o3</option>
-                <option value="o4-mini">o4-mini</option>
-                <option value="gpt-4o-mini">GPT-4o-mini</option>
+                <option value="gpt-5" selected>GPT-5</option>
+                <option value="gpt-5-thinking">GPT-5 Thinking</option>
+                <option value="o3">o3</option>
               </select>
             </div>
+      
+      <!-- Consistency Toggle -->
+      <div class="sidebar-section">
+        <label>Training Data Consistency</label>
+        <input type="hidden" id="consistencyValue" value="consistent">
+        <div style="display:flex;gap:0.5rem;">
+          <button type="button" class="consistency-toggle-btn consistency-active" data-value="consistent" onclick="setConsistency('consistent')">
+            Consistent
+          </button>
+          <button type="button" class="consistency-toggle-btn" data-value="non-consistent" onclick="setConsistency('non-consistent')">
+            Non-consistent
+          </button>
+        </div>
+      </div>
       
       <div class="sidebar-section">
         <label>Agreement Runs</label>
@@ -837,35 +1549,37 @@
           </div>
 
       <!-- Consistency Toggle (Production Mode Only) -->
-      <div class="sidebar-section" id="consistencyToggle" style="display:none;">
-        <label style="display:block;margin-bottom:0.75rem;font-weight:600;">Training Data Consistency</label>
-        <div style="display:flex;flex-direction:column;gap:0.75rem;">
-          <label style="display:flex;align-items:flex-start;gap:0.5rem;cursor:pointer;font-size:0.813rem;">
-            <input type="radio" name="consistency" value="consistent" checked style="margin-top:2px;">
-            <span><strong>✅ Consistent</strong><br><span style="color:#718096;">Examples follow similar format</span></span>
-          </label>
-          <label style="display:flex;align-items:flex-start;gap:0.5rem;cursor:pointer;font-size:0.813rem;">
-            <input type="radio" name="consistency" value="non-consistent" style="margin-top:2px;">
-            <span><strong>⚠️ Non-consistent</strong><br><span style="color:#718096;">Contracts vary significantly</span></span>
-          </label>
-      </div>
-    </div>
-
+      <!-- Contract Upload / Tabs Toggle -->
       <div class="sidebar-section">
-        <label>Contract PDF *</label>
-        <input type="file" id="file" accept="application/pdf" required style="font-size:0.75rem;padding:0.5rem;">
-      </div>
-      
-      <!-- Load Previous Training (Demo Mode Only) -->
-      <div id="loadTrainingContainer" style="display:none;margin-top:1rem;padding:1rem;background:#fffaf0;border:2px solid #f39c12;border-radius:6px;">
-        <div style="font-size:0.813rem;font-weight:600;color:#d68910;margin-bottom:0.5rem;">📚 Edit Existing Training</div>
-        <div style="font-size:0.75rem;color:#744210;margin-bottom:0.75rem;">Load your saved training session to review or update instructions</div>
-        <button type="button" class="btn" style="width:100%;background:#f39c12;color:white;font-size:0.813rem;padding:0.625rem;" onclick="loadPreviousTraining()">📂 Load Previous Training Session</button>
+        <label>Contract Source *</label>
+        <div class="btn-group w-100 mb-2" role="group">
+          <button type="button" id="uploadToggle" class="btn btn-sm btn-toggle-active" onclick="showUploadMode()"><i class="bi bi-file-pdf me-1"></i>Upload PDF</button>
+          <button type="button" id="tabsToggle" class="btn btn-sm btn-toggle-inactive" onclick="showTabsMode()"><i class="bi bi-link-45deg me-1"></i>From Tabs</button>
+        </div>
+        
+        <!-- Upload Mode -->
+        <div id="uploadMode">
+          <input type="file" id="file" accept="application/pdf" required style="font-size:0.75rem;padding:0.5rem;">
+        </div>
+        
+        <!-- Tabs Mode -->
+        <div id="tabsMode" style="display:none;">
+          <input type="text" id="tabsContractId" placeholder="Enter Contract ID" class="form-control">
+          <div id="tabsStatus" style="font-size:0.813rem;color:var(--text-secondary);margin-top:0.5rem;"></div>
+        </div>
       </div>
       
       <button type="submit" class="btn btn-primary" id="submitBtn" style="width:100%;margin-top:1rem;">Analyze Contract</button>
       <div class="alert" id="status" style="margin-top:0.75rem;"></div>
         </form>
+        
+        <!-- Settings Button (Demo & Configs) -->
+        <div style="padding:1.25rem;border-top:1px solid var(--border);">
+          <button type="button" class="btn btn-outline-secondary" onclick="openDemoConfigsModal()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+            <i class="bi bi-gear"></i>
+            <span>Demo & Configs</span>
+          </button>
+        </div>
     </div>
 
   <!-- Main Content -->
@@ -873,13 +1587,21 @@
     <div class="container">
     <div id="results"></div>
 
-    <div id="guidanceSection" style="display:none;" class="field-guidance">
-      <div class="guidance-header">💡 Field-Specific Guidance for <strong id="merchantName"></strong></div>
-      <p style="font-size: 0.875rem; color: #744210; margin-bottom: 1rem;">
-        Add instructions for how to extract specific fields from this merchant's contracts. These rules will apply to ALL future contracts.
-      </p>
-      
-      <div class="guidance-grid">
+    <div id="guidanceSection" style="display:none;">
+      <div class="accordion mb-3">
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#guidanceCollapse">
+              <span>Field-Specific Guidance for <strong id="merchantName"></strong></span>
+            </button>
+          </h2>
+          <div id="guidanceCollapse" class="accordion-collapse collapse">
+            <div class="accordion-body">
+              <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                Add instructions for how to extract specific fields from this merchant's contracts. These rules will apply to ALL future contracts.
+              </p>
+              
+              <div class="guidance-grid">
         <div class="guidance-item">
           <label>Item Name Extraction</label>
           <textarea id="guid_item_name" placeholder="e.g., Always use the exact wording from the 'Service Description' section"></textarea>
@@ -933,39 +1655,169 @@
           <textarea id="guid_general" placeholder="e.g., This merchant always has 3 line items: Platform Fee, Setup Fee, and Training"></textarea>
         </div>
       </div>
-
-      <!-- MIS Upload Section (Demo Mode Only) -->
-      <div id="misUploadContainer" style="display:none;margin-top:1.5rem;padding:1rem;background:#f7f3ff;border:2px dashed #8b5cf6;border-radius:8px;">
-        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem;">
-          <span style="font-size:1.5rem;">📄</span>
-          <div>
-            <div style="font-weight:600;color:#6b21a8;font-size:0.95rem;">Upload MIS Document (Optional)</div>
-            <div style="font-size:0.813rem;color:#7c3aed;">Auto-populate guidance fields using AI extraction</div>
+      
+      <!-- Advanced Options Accordion -->
+      <div class="accordion mt-3" id="advancedOptionsAccordion">
+        
+        <!-- Default Overrides Section -->
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#defaultOverridesCollapse">
+              <i class="bi bi-gear me-2 text-primary"></i>
+              <span>Default Value Overrides</span>
+              <span class="badge bg-light text-secondary ms-2">Optional</span>
+            </button>
+          </h2>
+          <div id="defaultOverridesCollapse" class="accordion-collapse collapse">
+            <div class="accordion-body">
+              <p class="text-muted mb-3" style="font-size: 0.75rem;">
+                <i class="bi bi-info-circle me-1"></i>
+                Set specific values that will ALWAYS override what the AI extracts. Leave blank to use AI extraction.
+              </p>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold text-secondary">Override Net Terms (days)</label>
+                  <input type="number" class="form-control form-control-sm" id="default_net_terms" placeholder="e.g., 30">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold text-secondary">Override Revenue Category</label>
+                  <input type="text" class="form-control form-control-sm" id="default_revenue_category" placeholder="e.g., SaaS Subscription">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold text-secondary">Override Billing Timing</label>
+                  <select class="form-select form-select-sm" id="default_billing_timing">
+                    <option value="">Use AI extraction</option>
+                    <option value="first">Bill first of period</option>
+                    <option value="last">Bill last of period</option>
+                    <option value="next_period">Bill first of next period</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold text-secondary">Override Arrears</label>
+                  <select class="form-select form-select-sm" id="default_arrears">
+                    <option value="">Use AI extraction</option>
+                    <option value="false">No (advance payment)</option>
+                    <option value="true">Yes (in arrears)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <input type="file" id="misFile" accept=".pdf,.doc,.docx,.txt" style="margin-bottom:0.75rem;width:100%;padding:0.5rem;border:1px solid #c4b5fd;border-radius:4px;font-size:0.875rem;">
-        <button type="button" class="btn" style="background:#8b5cf6;color:white;width:100%;font-size:0.875rem;padding:0.625rem;" onclick="uploadMIS()">🤖 Extract Instructions from MIS</button>
-        <div id="misStatus" style="margin-top:0.75rem;font-size:0.875rem;color:#718096;text-align:center;"></div>
-      </div>
+        
+        <!-- Field Exclusions Section -->
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#exclusionsCollapse">
+              <i class="bi bi-x-circle me-2 text-danger"></i>
+              <span>Field Exclusions</span>
+              <span class="badge bg-light text-secondary ms-2">Optional</span>
+            </button>
+          </h2>
+          <div id="exclusionsCollapse" class="accordion-collapse collapse">
+            <div class="accordion-body">
+              <p class="text-muted mb-3" style="font-size: 0.75rem;">
+                <i class="bi bi-info-circle me-1"></i>
+                Select fields to EXCLUDE from the API response. Excluded fields won't appear in garage_revenue_schedules.
+              </p>
+              <div class="row g-2">
+                <div class="col-md-6 col-lg-4">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input exclude-field" type="checkbox" value="item_description" id="exclude_item_description">
+                    <label class="form-check-label small" for="exclude_item_description">item_description</label>
+                  </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input exclude-field" type="checkbox" value="revenue_category" id="exclude_revenue_category">
+                    <label class="form-check-label small" for="exclude_revenue_category">revenue_category</label>
+                  </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input exclude-field" type="checkbox" value="service_start_date" id="exclude_service_start_date">
+                    <label class="form-check-label small" for="exclude_service_start_date">service_start_date</label>
+                  </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input exclude-field" type="checkbox" value="service_term" id="exclude_service_term">
+                    <label class="form-check-label small" for="exclude_service_term">service_term</label>
+                  </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input exclude-field" type="checkbox" value="event_to_track" id="exclude_event_to_track">
+                    <label class="form-check-label small" for="exclude_event_to_track">event_to_track</label>
+                  </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input exclude-field" type="checkbox" value="integration_item" id="exclude_integration_item">
+                    <label class="form-check-label small" for="exclude_integration_item">integration_item</label>
+                  </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input exclude-field" type="checkbox" value="discounts" id="exclude_discounts">
+                    <label class="form-check-label small" for="exclude_discounts">discounts</label>
+                  </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input exclude-field" type="checkbox" value="pricing_tiers" id="exclude_pricing_tiers">
+                    <label class="form-check-label small" for="exclude_pricing_tiers">pricing_tiers</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+              </div>
 
-      <div style="margin-top: 1rem; display: flex; gap: 0.625rem;">
-        <button type="button" class="btn btn-success" onclick="saveFieldGuidance()">💾 Save All Guidance</button>
-        <button type="button" class="btn" style="background: #718096; color: white;" onclick="loadFieldGuidance()">🔄 Reload</button>
+              <!-- MIS Upload Section (Demo Mode Only) -->
+              <div id="misUploadContainer" style="display:none;margin-top:1.5rem;padding:1rem;background:#f0f4ff;border:1px solid #c7d2fe;border-radius:8px;">
+                <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem;">
+                  <div>
+                    <div style="font-weight:600;color:#4338ca;font-size:0.875rem;">Upload MIS Document (Optional)</div>
+                    <div style="font-size:0.75rem;color:var(--text-secondary);">Auto-populate guidance fields using AI extraction</div>
+                  </div>
+                </div>
+                <input type="file" id="misFile" accept=".pdf,.doc,.docx,.txt" class="form-control form-control-sm mb-2">
+                <button type="button" class="btn btn-primary btn-sm w-100" onclick="uploadMIS()">
+                  <i class="bi bi-robot me-1"></i> Extract Instructions from MIS
+                </button>
+                <div id="misStatus" style="margin-top:0.75rem;font-size:0.75rem;color:var(--text-secondary);text-align:center;"></div>
+              </div>
+
+              <div style="margin-top: 1.5rem; display: flex; gap: 0.625rem;">
+                <button type="button" class="btn btn-success btn-sm" onclick="saveFieldGuidance()">
+                  <i class="bi bi-save me-1"></i> Save All Guidance
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="loadFieldGuidance()">
+                  <i class="bi bi-arrow-clockwise me-1"></i> Reload
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
   
   </div> <!-- End of main-app -->
   
   <!-- Confirmation Modal -->
   <div id="confirmationModal" class="confirmation-modal">
     <div class="confirmation-content">
-      <h3>⚠️ Are you sure?</h3>
+      <h3>Confirm Save</h3>
       <p>This training session will be used as reference material for future contract processing.</p>
       <p><strong>Important:</strong> If this data is incorrect or filled incorrectly, the AI model might hallucinate or make similar mistakes on future contracts. Please double-check all fields before saving.</p>
       <div class="confirmation-buttons">
         <button class="btn" style="background:#718096;color:white;" onclick="closeConfirmation()">Cancel</button>
-        <button class="btn btn-success" onclick="confirmSave()">✓ Confirm & Save</button>
+        <button class="btn btn-success" onclick="confirmSave()">
+          <i class="bi bi-check-circle me-1"></i> Confirm & Save
+        </button>
       </div>
     </div>
   </div>
@@ -974,11 +1826,52 @@
   <div id="pdfModal" class="pdf-modal" onclick="closePDFModal(event)">
     <div class="pdf-modal-content" onclick="event.stopPropagation()">
       <div class="pdf-modal-header">
-        <h3>📄 Contract PDF</h3>
+        <h3>Contract PDF</h3>
         <button class="pdf-modal-close" onclick="closePDFModal()">✕ Close</button>
       </div>
       <div class="pdf-modal-body">
         <iframe id="pdfViewer" src=""></iframe>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Garage Output JSON Modal -->
+  <div id="garageOutputModal" class="pdf-modal" onclick="closeGarageOutputModal(event)">
+    <div class="pdf-modal-content" onclick="event.stopPropagation()" style="max-width:800px;height:auto;max-height:80vh;">
+      <div class="pdf-modal-header">
+        <h3>Garage Revenue Schedules JSON</h3>
+        <button class="pdf-modal-close" onclick="closeGarageOutputModal()">✕ Close</button>
+      </div>
+      <div class="pdf-modal-body" style="padding:1.5rem;overflow-y:auto;">
+        <pre id="garageOutputJSON" style="background:#1e293b;color:#e2e8f0;padding:1.5rem;border-radius:8px;font-size:0.813rem;line-height:1.6;overflow-x:auto;"></pre>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Demo & Configs Auth Modal -->
+  <div id="demoAuthModal" class="pdf-modal" onclick="closeDemoAuthModal(event)">
+    <div class="pdf-modal-content" onclick="event.stopPropagation()" style="max-width:500px;height:auto;">
+      <div class="pdf-modal-header">
+        <h3>Demo & Configs Access</h3>
+        <button class="pdf-modal-close" onclick="closeDemoAuthModal()">✕ Close</button>
+      </div>
+      <div class="pdf-modal-body" style="padding:2rem;">
+        <p style="color:var(--text-secondary);margin-bottom:1.5rem;font-size:0.875rem;">
+          Enter your Tabs API key to access training and configuration settings.
+        </p>
+        
+        <form onsubmit="authenticateDemoAccess(event)">
+          <div style="margin-bottom:1.5rem;">
+            <label style="display:block;font-weight:600;margin-bottom:0.5rem;color:var(--text-primary);font-size:0.875rem;">Tabs API Key</label>
+            <input type="password" id="demoApiKey" class="form-control" placeholder="Enter your Tabs API key" required style="width:100%;padding:0.75rem;border:1px solid var(--border);border-radius:8px;font-size:0.875rem;">
+          </div>
+          
+          <div id="demoAuthError" style="display:none;background:linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);color:#991b1b;padding:0.75rem 1rem;border-radius:8px;margin-bottom:1rem;font-size:0.813rem;border:1px solid #f87171;"></div>
+          
+          <button type="submit" class="btn btn-primary w-100" style="padding:0.75rem;font-size:0.875rem;">
+            <i class="bi bi-unlock me-2"></i> Access Demo & Configs
+          </button>
+        </form>
       </div>
     </div>
   </div>
@@ -987,7 +1880,7 @@
     let integrationMapping = [];
     let currentData = null;
     let currentMerchantId = 'default';
-    let currentStage = 'demo';
+    let currentStage = 'production';  // Always production mode on main page
     let allMerchants = [];
 
     const form = document.getElementById('uploadForm');
@@ -1019,14 +1912,68 @@
       document.getElementById('landingPage').style.display = 'none';
       document.getElementById('mainApp').classList.add('active');
       
-      // Display the selected merchant name
-      const merchantDisplayName = landingMerchantSelect.value === '__new__' 
-        ? document.getElementById('landingNewMerchantName').value 
-        : landingMerchantSelect.options[landingMerchantSelect.selectedIndex].text;
+      // Populate merchant dropdown in sidebar
+      populateSidebarMerchantDropdown();
       
-      document.getElementById('currentMerchantDisplay').textContent = merchantDisplayName;
+      // Set the selected merchant in the dropdown
+      document.getElementById('merchantSelect').value = currentMerchantId;
       
       // Initialize the stage
+      handleStageChange();
+    }
+    
+    // Toggle sidebar collapse
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      sidebar.classList.toggle('collapsed');
+    }
+    
+    // Go to landing page - click on Garage brand
+    function goToLanding() {
+      // Clear results
+      document.getElementById('results').innerHTML = '';
+      
+      // Remove bottom actions if present
+      const bottomActions = document.querySelector('.bottom-actions');
+      if (bottomActions) {
+        bottomActions.remove();
+      }
+      
+      // Reset merchant selection
+      currentMerchantId = null;
+      
+      // Show landing page, hide main app
+      document.getElementById('landingPage').style.display = 'flex';
+      document.getElementById('mainApp').classList.remove('active');
+      
+      // Reset landing page form
+      landingMerchantSelect.value = '';
+      landingNewMerchantContainer.style.display = 'none';
+      document.getElementById('landingNewMerchantName').value = '';
+    }
+    
+    // Handle merchant change from dropdown
+    function handleMerchantChange() {
+      const merchantSelect = document.getElementById('merchantSelect');
+      const newMerchantId = merchantSelect.value;
+      
+      if (!newMerchantId || newMerchantId === currentMerchantId) {
+        return;
+      }
+      
+      // Clear results
+      document.getElementById('results').innerHTML = '';
+      
+      // Remove bottom actions if present
+      const bottomActions = document.querySelector('.bottom-actions');
+      if (bottomActions) {
+        bottomActions.remove();
+      }
+      
+      // Update current merchant
+      currentMerchantId = newMerchantId;
+      
+      // Reload guidance for new merchant
       handleStageChange();
     }
     
@@ -1074,49 +2021,55 @@
       landingMerchantSelect.appendChild(newOption);
     }
     
-    // Merchant dropdown removed from sidebar - selection happens on landing page
+    // Populate sidebar merchant dropdown
+    function populateSidebarMerchantDropdown() {
+      const merchantSelect = document.getElementById('merchantSelect');
+      merchantSelect.innerHTML = '<option value="">Select merchant...</option>';
+      
+      allMerchants.forEach(merchant => {
+        const option = document.createElement('option');
+        option.value = merchant.id;
+        option.textContent = `🏢 ${merchant.name}`;
+        merchantSelect.appendChild(option);
+      });
+    }
+    
+    function setConsistency(value) {
+      document.getElementById('consistencyValue').value = value;
+      document.querySelectorAll('.consistency-toggle-btn').forEach(btn => {
+        btn.classList.remove('consistency-active');
+      });
+      document.querySelector(`.consistency-toggle-btn[data-value="${value}"]`).classList.add('consistency-active');
+    }
     
     function handleStageChange() {
-      currentStage = document.getElementById('stage').value;
+      // Always production mode - no stage switching
+      currentStage = 'production';
+      
+      // Add production mode badge
       const badge = document.createElement('div');
-      badge.className = `stage-badge stage-${currentStage}`;
-      badge.textContent = currentStage === 'demo' 
-        ? '🧪 DEMO MODE: Review, correct, and add instructions for training'
-        : '🚀 PRODUCTION MODE: Using saved training data for extraction';
+      badge.className = 'stage-badge stage-production';
+      badge.textContent = 'PRODUCTION MODE: Live extraction with trained AI';
       
       const existing = document.querySelector('.stage-badge');
       if (existing) existing.remove();
       
       form.insertBefore(badge, form.firstChild);
       
-      // Clear results when switching stages
+      // Clear results
       document.getElementById('results').innerHTML = '';
       currentData = null;
       
-      // Hide floating action buttons
-      const floatingActions = document.querySelector('.floating-actions');
-      if (floatingActions) {
-        floatingActions.innerHTML = '';
+      // Hide bottom action buttons
+      const bottomActions = document.querySelector('.bottom-actions');
+      if (bottomActions) {
+        bottomActions.remove();
       }
       
-      // Show/hide guidance section based on stage
-      if (currentStage === 'demo') {
-        // Demo mode - guidance section will show after contract analysis
-      } else {
-        // Production mode - always hide guidance section
-        document.getElementById('guidanceSection').style.display = 'none';
-      }
-      
-      // Show/hide consistency toggle based on stage (Production only)
-      document.getElementById('consistencyToggle').style.display = currentStage === 'production' ? 'block' : 'none';
-      
-      // Show/hide load training button based on stage (Demo only)
-      document.getElementById('loadTrainingContainer').style.display = currentStage === 'demo' ? 'block' : 'none';
-      
-      // Hide new merchant input if switching to production
-      if (currentStage === 'production') {
-        document.getElementById('newMerchantContainer').style.display = 'none';
-        document.getElementById('newMerchantName').required = false;
+      // Always hide guidance section in production
+      const guidanceSection = document.getElementById('guidanceSection');
+      if (guidanceSection) {
+        guidanceSection.style.display = 'none';
       }
     }
 
@@ -1195,7 +2148,7 @@
       
       const misStatus = document.getElementById('misStatus');
       misStatus.textContent = '⏳ Extracting instructions from MIS...';
-      misStatus.style.color = '#d68910';
+      misStatus.style.color = 'var(--text-secondary)';
       
       const formData = new FormData();
       formData.append('file', file);
@@ -1224,8 +2177,8 @@
         }
       } catch (error) {
         console.error('MIS upload error:', error);
-        misStatus.textContent = '❌ Failed to extract instructions';
-        misStatus.style.color = '#e53e3e';
+        misStatus.textContent = 'Failed to extract instructions';
+        misStatus.style.color = '#f87171';
         showStatus('error', '❌ Failed to extract MIS instructions: ' + error.message);
       }
     }
@@ -1273,12 +2226,44 @@
           document.getElementById('guid_event_to_track').value = fs.event_to_track || '';
           document.getElementById('guid_general').value = fs.general || '';
         }
+        
+        // Load default overrides
+        if (data.guidance && data.guidance.default_overrides) {
+          const defaults = data.guidance.default_overrides;
+          document.getElementById('default_net_terms').value = defaults.net_terms || '';
+          document.getElementById('default_revenue_category').value = defaults.revenue_category || '';
+          document.getElementById('default_billing_timing').value = defaults.billing_timing || '';
+          document.getElementById('default_arrears').value = defaults.arrears !== undefined ? String(defaults.arrears) : '';
+        }
+        
+        // Load excluded fields
+        if (data.guidance && data.guidance.excluded_fields) {
+          document.querySelectorAll('.exclude-field').forEach(cb => {
+            cb.checked = data.guidance.excluded_fields.includes(cb.value);
+          });
+        }
       } catch (error) {
         console.error('Failed to load guidance:', error);
       }
     }
 
     async function saveFieldGuidance() {
+      // Build default overrides object
+      const default_overrides = {};
+      const netTerms = document.getElementById('default_net_terms').value;
+      const revenueCategory = document.getElementById('default_revenue_category').value.trim();
+      const billingTiming = document.getElementById('default_billing_timing').value;
+      const arrears = document.getElementById('default_arrears').value;
+      
+      if (netTerms) default_overrides.net_terms = parseInt(netTerms);
+      if (revenueCategory) default_overrides.revenue_category = revenueCategory;
+      if (billingTiming) default_overrides.billing_timing = billingTiming;
+      if (arrears) default_overrides.arrears = arrears === 'true';
+      
+      // Build excluded fields array
+      const excluded_fields = Array.from(document.querySelectorAll('.exclude-field:checked'))
+        .map(cb => cb.value);
+      
       const guidance = {
         field_specific: {
           item_name: document.getElementById('guid_item_name').value.trim(),
@@ -1295,6 +2280,8 @@
           event_to_track: document.getElementById('guid_event_to_track').value.trim(),
           general: document.getElementById('guid_general').value.trim()
         },
+        default_overrides,
+        excluded_fields,
         system_additions: '',
         updated_at: new Date().toISOString()
       };
@@ -1316,12 +2303,87 @@
       }
     }
 
+    // Bootstrap handles accordion toggling automatically - no custom function needed
+
+    // Toggle functions - Custom button styling for visibility
+    function showUploadMode() {
+      document.getElementById('uploadMode').style.display = 'block';
+      document.getElementById('tabsMode').style.display = 'none';
+      
+      const uploadBtn = document.getElementById('uploadToggle');
+      const tabsBtn = document.getElementById('tabsToggle');
+      
+      uploadBtn.className = 'btn btn-sm btn-toggle-active';
+      tabsBtn.className = 'btn btn-sm btn-toggle-inactive';
+      
+      document.getElementById('file').required = true;
+    }
+    
+    async function showTabsMode() {
+      document.getElementById('uploadMode').style.display = 'none';
+      document.getElementById('tabsMode').style.display = 'block';
+      
+      const uploadBtn = document.getElementById('uploadToggle');
+      const tabsBtn = document.getElementById('tabsToggle');
+      
+      uploadBtn.className = 'btn btn-sm btn-toggle-inactive';
+      tabsBtn.className = 'btn btn-sm btn-toggle-active';
+      
+      document.getElementById('file').required = false;
+      
+      // Load existing Tabs credentials
+      await loadTabsCredentials();
+    }
+    
+    async function loadTabsCredentials() {
+      try {
+        const res = await fetch(`/api/merchant/${currentMerchantId}`);
+        const data = await res.json();
+        
+        if (data.merchant && data.merchant.tabsApiKey) {
+          document.getElementById('tabsApiKey').value = data.merchant.tabsApiKey;
+          document.getElementById('tabsEnv').value = data.merchant.tabsEnv || 'dev';
+          document.getElementById('tabsStatus').innerHTML = '<span style="color:#48bb78;">✅ API key configured</span>';
+        } else {
+          document.getElementById('tabsApiKey').value = '';
+          document.getElementById('tabsEnv').value = 'dev';
+          document.getElementById('tabsStatus').innerHTML = '<span style="color:#f6ad55;">⚠️ No API key saved - enter one above</span>';
+        }
+      } catch (error) {
+        console.error('Failed to load Tabs credentials:', error);
+      }
+    }
+    
+    async function saveTabsCredentials() {
+      const apiKey = document.getElementById('tabsApiKey').value.trim();
+      const env = document.getElementById('tabsEnv').value;
+      
+      if (!apiKey) {
+        document.getElementById('tabsStatus').innerHTML = '<span style="color:#f56565;">❌ Please enter an API key</span>';
+        return;
+      }
+      
+      try {
+        const res = await fetch(`/api/merchant/${currentMerchantId}/tabs-credentials`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tabsApiKey: apiKey, tabsEnv: env })
+        });
+        
+        if (res.ok) {
+          document.getElementById('tabsStatus').innerHTML = '<span style="color:#48bb78;">✅ API key saved successfully!</span>';
+        } else {
+          const data = await res.json();
+          throw new Error(data.error || 'Failed to save');
+        }
+      } catch (error) {
+        document.getElementById('tabsStatus').innerHTML = `<span style="color:#f56565;">❌ ${error.message}</span>`;
+      }
+    }
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       
-      const file = document.getElementById('file').files[0];
-      if (!file) return;
-
       // Use merchant ID from landing page selection
       const merchantId = currentMerchantId;
       
@@ -1330,34 +2392,75 @@
         return;
       }
 
-      const formData = new FormData();
-      formData.append('file', file);
-      if (integrationMapping.length > 0) {
-        formData.append('integration_mapping', JSON.stringify(integrationMapping));
-      }
-
-      const params = new URLSearchParams({
-        model: document.getElementById('model').value,
-        forceMulti: document.getElementById('forceMulti').value,
-        runs: document.getElementById('runs').value,
-        merchantId: merchantId,
-        stage: currentStage,
-        consistency: currentStage === 'production' ? (document.querySelector('input[name="consistency"]:checked')?.value || 'consistent') : 'consistent'
-      });
-
       submitBtn.disabled = true;
       submitBtn.textContent = 'Analyzing...';
       showStatus('info', `⏳ Analyzing contract for ${merchantId}...`);
       results.innerHTML = '';
 
       try {
-        const res = await fetch(`/api/extract?${params}`, {
-          method: 'POST',
-          body: formData
-        });
+        let data;
+        
+        // Check if using Tabs mode or Upload mode
+        const isTabsMode = document.getElementById('tabsMode').style.display !== 'none';
+        
+        if (isTabsMode) {
+          // Extract from Tabs API
+          const contractID = document.getElementById('tabsContractId').value.trim();
+          if (!contractID) {
+            showStatus('error', '❌ Please enter a Contract ID');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Analyze Contract';
+            return;
+          }
+          
+          const res = await fetch('/api/extract-from-tabs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              merchantId,
+              contractID,
+              model: document.getElementById('model').value,
+              stage: currentStage,
+              tabsEnv: 'prod' // Production mode always uses prod environment
+            })
+          });
+          
+          data = await res.json();
+          if (!res.ok) throw new Error(data.error || data.hint || 'Request failed');
+          
+        } else {
+          // Upload file
+          const file = document.getElementById('file').files[0];
+          if (!file) {
+            showStatus('error', '❌ Please select a file');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Analyze Contract';
+            return;
+          }
 
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Request failed');
+          const formData = new FormData();
+          formData.append('file', file);
+          if (integrationMapping.length > 0) {
+            formData.append('integration_mapping', JSON.stringify(integrationMapping));
+          }
+
+          const params = new URLSearchParams({
+            model: document.getElementById('model').value,
+            forceMulti: document.getElementById('forceMulti').value,
+            runs: document.getElementById('runs').value,
+            merchantId: merchantId,
+            stage: currentStage,
+            consistency: currentStage === 'production' ? (document.getElementById('consistencyValue')?.value || 'consistent') : 'consistent'
+          });
+
+          const res = await fetch(`/api/extract?${params}`, {
+            method: 'POST',
+            body: formData
+          });
+
+          data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Request failed');
+        }
 
         currentData = data;
         
@@ -1433,55 +2536,22 @@
 
       results.innerHTML = '';
       
-      // Add floating action buttons
-      let floatingActions = document.querySelector('.floating-actions');
-      if (!floatingActions) {
-        floatingActions = document.createElement('div');
-        floatingActions.className = 'floating-actions';
-        document.body.appendChild(floatingActions);
-      }
-      
-      floatingActions.innerHTML = '';
-      
-      if (currentStage === 'demo') {
-        floatingActions.innerHTML = `
-          <button type="button" class="floating-btn" style="background:#f39c12;color:white;" onclick="saveDemoSession()" title="Save Training Session">💾 Save Training</button>
-          ${data.pdf_session_id ? `<button type="button" class="floating-btn" style="background:#4299e1;color:white;" onclick="viewPDF('${data.pdf_session_id}')" title="View Contract PDF">📄 View PDF</button>` : ''}
-        `;
-      } else {
-        floatingActions.innerHTML = `
-          ${data.pdf_session_id ? `<button type="button" class="floating-btn" style="background:#4299e1;color:white;" onclick="viewPDF('${data.pdf_session_id}')" title="View Contract PDF">📄 View PDF</button>` : ''}
-        `;
-      }
-      
-      // Add "Add New Schedule" button at the top in demo mode
-      if (currentStage === 'demo') {
-        const addButton = document.createElement('div');
-        addButton.style.cssText = 'text-align:center;margin-bottom:1.5rem;';
-        addButton.innerHTML = `
-          <button type="button" class="btn btn-success" onclick="addNewSchedule()" style="font-size:1rem;padding:0.75rem 1.5rem;">
-            ➕ Add New Revenue Schedule
-          </button>
-        `;
-        results.appendChild(addButton);
-      }
-      
       // Add simple header
       const headerDiv = document.createElement('div');
       headerDiv.className = 'card';
       
       if (currentStage === 'demo') {
         headerDiv.innerHTML = `
-          <div class="card-body">
-            <h3 style="color:#d68910;margin:0;font-size:1.125rem;">🧪 Demo Mode - Training Session</h3>
-            <p style="color:#666;margin:0.5rem 0 0 0;font-size:0.875rem;">Review AI results, make corrections, and add instructions</p>
+          <div class="card-body" style="padding:1rem;">
+            <h3 style="color:#3b82f6;margin:0;font-size:1rem;font-weight:600;">Demo Mode - Training Session</h3>
+            <p style="color:var(--text-secondary);margin:0.375rem 0 0 0;font-size:0.813rem;">Review AI results, make corrections, and add instructions</p>
           </div>
         `;
       } else {
         headerDiv.innerHTML = `
-          <div class="card-body">
-            <h3 style="color:#186a3b;margin:0;font-size:1.125rem;">🚀 Production Mode</h3>
-            <p style="color:#666;margin:0.5rem 0 0 0;font-size:0.875rem;">Using saved training data (read-only)</p>
+          <div class="card-body" style="padding:1rem;">
+            <h3 style="color:#166534;margin:0;font-size:1rem;font-weight:600;">Production Mode</h3>
+            <p style="color:var(--text-secondary);margin:0.375rem 0 0 0;font-size:0.813rem;">Using saved training data (read-only)</p>
           </div>
         `;
       }
@@ -1499,7 +2569,7 @@
 
         item.innerHTML = `
           <div class="schedule-header" onclick="toggleSchedule(${index})">
-            <div class="toggle-icon">▶</div>
+            <div class="toggle-icon"><i class="bi bi-chevron-right"></i></div>
             <div class="schedule-info">
               <div class="schedule-name">${esc(schedule.item_name || 'Unnamed')}</div>
               <div class="schedule-meta">$${price} • ${schedule.billing_type || 'N/A'} • ${evidenceCount} evidence</div>
@@ -1518,16 +2588,21 @@
             ` : ''}
 
             <div class="section">
-              <div class="section-title">Evidence from Contract</div>
-              ${schedule.evidence && schedule.evidence.length > 0 ? 
-                schedule.evidence.map(ev => `
-                  <div class="evidence-box">
-                    <div class="evidence-header">Page ${ev.page || '?'} • ${ev.field_supported || 'General'}</div>
-                    <div class="evidence-text">${esc(ev.snippet || 'No snippet')}</div>
-                  </div>
-                `).join('') : 
-                '<p style="color:#a0aec0;text-align:center;padding:1rem;">⚠️ No evidence provided by AI</p>'
-              }
+              <div class="instructions-toggle" onclick="toggleEvidence(${index})">
+                <span>Evidence from Contract</span>
+                <span class="toggle-icon"><i class="bi bi-chevron-down"></i></span>
+              </div>
+              <div id="evidence-${index}" class="instructions-content">
+                ${schedule.evidence && schedule.evidence.length > 0 ? 
+                  schedule.evidence.map(ev => `
+                    <div class="evidence-box">
+                      <div class="evidence-header">Page ${ev.page || '?'} • ${ev.field_supported || 'General'}</div>
+                      <div class="evidence-text">${esc(ev.snippet || 'No snippet')}</div>
+                    </div>
+                  `).join('') : 
+                  '<p style="color:#a0aec0;text-align:center;padding:1rem;">No evidence provided by AI</p>'
+                }
+              </div>
             </div>
 
             <div class="section ${currentStage === 'production' ? 'read-only-view' : ''}">
@@ -1638,99 +2713,86 @@
                 </div>
               </div>
               
-              <!-- Tier Pricing (for Tier pricing only) -->
-              <div id="tier-section-${index}" style="display:${schedule.billing_type && (schedule.billing_type === 'Tier flat price' || schedule.billing_type === 'Tier unit price') ? 'block' : 'none'};margin-top:1rem;padding:1rem;background:#f7fafc;border-radius:6px;">
-                <h4 style="margin:0 0 0.75rem 0;font-size:0.875rem;font-weight:600;color:#2d3748;">Tier Pricing</h4>
-                <div id="tiers-container-${index}">
-                  ${(schedule.tiers || []).map((tier, tierIdx) => `
-                    <div class="form-row" style="background:white;padding:0.75rem;border-radius:4px;margin-bottom:0.5rem;border:1px solid #e2e8f0;">
-                      <div>
-                        <label>Tier ${tierIdx + 1} Name</label>
-                        <input type="text" value="${esc(tier.tier_name || `Tier ${tierIdx + 1}`)}" data-tier="tier_name" data-tier-idx="${tierIdx}" data-index="${index}" ${currentStage === 'production' ? 'readonly' : ''}>
-                      </div>
-                      <div>
-                        <label>Price ${schedule.billing_type === 'Tier unit price' ? '(per unit)' : '(flat)'}</label>
-                        <input type="number" step="0.01" value="${tier.price || 0}" data-tier="price" data-tier-idx="${tierIdx}" data-index="${index}" ${currentStage === 'production' ? 'readonly' : ''}>
-                      </div>
-                      <div>
-                        <label>Applied When (condition)</label>
-                        <input type="text" value="${esc(tier.applied_when || '')}" data-tier="applied_when" data-tier-idx="${tierIdx}" data-index="${index}" placeholder="e.g., 0-10, 10+" ${currentStage === 'production' ? 'readonly' : ''}>
-                      </div>
-                      <div>
-                        <label>Min Quantity</label>
-                        <input type="number" value="${tier.min_quantity || 0}" data-tier="min_quantity" data-tier-idx="${tierIdx}" data-index="${index}" ${currentStage === 'production' ? 'readonly' : ''}>
-                      </div>
+              <!-- Tier Pricing (for Tier pricing only) - Simplified Display -->
+              <div id="tier-section-${index}" style="display:${schedule.billing_type && (schedule.billing_type === 'Tier flat price' || schedule.billing_type === 'Tier unit price') ? 'block' : 'none'};margin-top:1rem;">
+                <div class="form-row">
+                  <div style="grid-column: span 2;">
+                    <label>Tiers</label>
+                    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;padding:0.75rem;background:var(--bg-subtle);border-radius:8px;border:1px solid var(--border);">
+                      ${(schedule.tiers || []).map((tier, tierIdx) => `
+                        <span class="badge" style="padding:0.5rem 0.875rem;font-size:0.875rem;background:var(--primary);color:white;">Tier ${tierIdx + 1}</span>
+                      `).join('') || '<span style="color:var(--text-secondary);font-size:0.813rem;">No tiers</span>'}
                     </div>
-                  `).join('') || '<p style="color:#718096;text-align:center;padding:0.5rem;">No tiers defined. Click "Add Tier" to create one.</p>'}
+                  </div>
                 </div>
-                ${currentStage === 'demo' ? `
-                  <button type="button" class="btn btn-success" onclick="addTier(${index})" style="margin-top:0.5rem;font-size:0.813rem;padding:0.5rem 1rem;">+ Add Tier</button>
-                ` : ''}
               </div>
 
               ${currentStage === 'demo' ? `
                 <!-- Collapsible Instructions Section -->
                 <div class="instructions-toggle" onclick="toggleInstructions(${index})">
-                  <span>📝 Field-Specific Guidance & Instructions</span>
-                  <span class="toggle-icon">▼</span>
+                  <span>Field-Specific Guidance & Instructions</span>
+                  <span class="toggle-icon"><i class="bi bi-chevron-down"></i></span>
                 </div>
                 <div id="instructions-${index}" class="instructions-content">
                   <div style="display:grid;gap:1rem;">
                     <div>
-                      <label style="font-weight:600;color:#2d3748;">📍 Item Name - Where to find?</label>
+                      <label style="font-weight:600;color:#2d3748;">Item Name - Where to find?</label>
                       <textarea data-instruction="item_name" data-index="${index}" placeholder="e.g., Look for product/service name in Schedule A">${esc(schedule.instruction_item_name || '')}</textarea>
                     </div>
                     <div>
-                      <label style="font-weight:600;color:#2d3748;">📍 Description - Where to find?</label>
+                      <label style="font-weight:600;color:#2d3748;">Description - Where to find?</label>
                       <textarea data-instruction="description" data-index="${index}" placeholder="e.g., Additional details section, look for community/location names">${esc(schedule.instruction_description || '')}</textarea>
                     </div>
                     <div>
-                      <label style="font-weight:600;color:#2d3748;">📍 Total Price - Where to find?</label>
+                      <label style="font-weight:600;color:#2d3748;">Total Price - Where to find?</label>
                       <textarea data-instruction="total_price" data-index="${index}" placeholder="e.g., Total Amount column, exclude taxes">${esc(schedule.instruction_total_price || '')}</textarea>
                     </div>
                     <div>
-                      <label style="font-weight:600;color:#2d3748;">📍 Billing Type - How to determine?</label>
+                      <label style="font-weight:600;color:#2d3748;">Billing Type - How to determine?</label>
                       <textarea data-instruction="billing_type" data-index="${index}" placeholder="e.g., Flat unless per-unit or tiered pricing">${esc(schedule.instruction_billing_type || '')}</textarea>
                     </div>
                     <div>
-                      <label style="font-weight:600;color:#2d3748;">📍 Quantity - Where to find?</label>
+                      <label style="font-weight:600;color:#2d3748;">Quantity - Where to find?</label>
                       <textarea data-instruction="quantity" data-index="${index}" placeholder="e.g., Number of units/seats, typically 1 for flat pricing">${esc(schedule.instruction_quantity || '')}</textarea>
                     </div>
                     <div>
-                      <label style="font-weight:600;color:#2d3748;">📍 Start Date - Where to find?</label>
+                      <label style="font-weight:600;color:#2d3748;">Start Date - Where to find?</label>
                       <textarea data-instruction="start_date" data-index="${index}" placeholder="e.g., Effective Date or Service Start Date">${esc(schedule.instruction_start_date || '')}</textarea>
                     </div>
                     <div>
-                      <label style="font-weight:600;color:#2d3748;">📍 Frequency - Where to find?</label>
+                      <label style="font-weight:600;color:#2d3748;">Frequency - Where to find?</label>
                       <textarea data-instruction="frequency_unit" data-index="${index}" placeholder="e.g., Monthly, Quarterly, Annual billing">${esc(schedule.instruction_frequency_unit || '')}</textarea>
                     </div>
                     <div>
-                      <label style="font-weight:600;color:#2d3748;">📍 # Periods - Where to find?</label>
+                      <label style="font-weight:600;color:#2d3748;"># Periods - Where to find?</label>
                       <textarea data-instruction="periods" data-index="${index}" placeholder="e.g., Number of billing cycles">${esc(schedule.instruction_periods || '')}</textarea>
                     </div>
                     <div>
-                      <label style="font-weight:600;color:#2d3748;">📍 Months of Service - Where to find?</label>
+                      <label style="font-weight:600;color:#2d3748;">Months of Service - Where to find?</label>
                       <textarea data-instruction="months_of_service" data-index="${index}" placeholder="e.g., Contract term (12, 24, 36 months)">${esc(schedule.instruction_months_of_service || '')}</textarea>
                     </div>
                     <div>
-                      <label style="font-weight:600;color:#2d3748;">📍 Net Terms - Where to find?</label>
+                      <label style="font-weight:600;color:#2d3748;">Net Terms - Where to find?</label>
                       <textarea data-instruction="net_terms" data-index="${index}" placeholder="e.g., Net 30, Net 60, Due on receipt">${esc(schedule.instruction_net_terms || '')}</textarea>
                     </div>
                     <div>
-                      <label style="font-weight:600;color:#2d3748;">📍 Billing Timing - Where to find?</label>
+                      <label style="font-weight:600;color:#2d3748;">Billing Timing - Where to find?</label>
                       <textarea data-instruction="billing_timing" data-index="${index}" placeholder="e.g., Billed in advance / arrears / usage-based">${esc(schedule.instruction_billing_timing || '')}</textarea>
                     </div>
                     <div>
-                      <label style="font-weight:600;color:#2d3748;">📍 Event to Track - Where to find?</label>
+                      <label style="font-weight:600;color:#2d3748;">Event to Track - Where to find?</label>
                       <textarea data-instruction="event_to_track" data-index="${index}" placeholder="Usually: item name + ' overage'">${esc(schedule.instruction_event_to_track || '')}</textarea>
                     </div>
                 </div>
               </div>
 
               <div class="actions">
-                  <button type="button" class="btn btn-success" onclick="applyCorrections(${index})">💾 Save Item Changes</button>
-                <button type="button" class="btn" style="background:#718096;color:white;" onclick="copyJSON(${index})">📋 Copy JSON</button>
-                  <button type="button" class="btn" style="background:#e53e3e;color:white;" onclick="deleteSchedule(${index})">🗑️ Delete Schedule</button>
+                <button type="button" class="btn btn-sm" style="background:#718096;color:white;" onclick="copyJSON(${index})">
+                  <i class="bi bi-clipboard me-1"></i> Copy JSON
+                </button>
+                <button type="button" class="btn btn-sm" style="background:#f87171;color:white;" onclick="deleteSchedule(${index})">
+                  <i class="bi bi-trash me-1"></i> Delete Schedule
+                </button>
               </div>
               ` : ''}
             </div>
@@ -1738,11 +2800,61 @@
         `;
 
         results.appendChild(item);
+        
+        // Add small "Add New Revenue Schedule" button after each schedule in demo mode
+        if (currentStage === 'demo' && index === data.schedules.length - 1) {
+          const addButton = document.createElement('div');
+          addButton.style.cssText = 'text-align:center;margin:1rem 0;';
+          addButton.innerHTML = `
+            <button type="button" class="btn btn-primary btn-sm" onclick="addNewSchedule()" style="font-size:0.75rem;padding:0.5rem 1rem;">
+              <i class="bi bi-plus-circle me-1"></i> Add New Revenue Schedule
+            </button>
+          `;
+          results.appendChild(addButton);
+        }
       });
+      
+      // Add bottom action buttons (fixed bottom-right corner)
+      let bottomActions = document.querySelector('.bottom-actions');
+      if (!bottomActions) {
+        bottomActions = document.createElement('div');
+        bottomActions.className = 'bottom-actions';
+        document.body.appendChild(bottomActions);
+      }
+      
+      bottomActions.innerHTML = '';
+      
+      if (currentStage === 'demo') {
+        bottomActions.innerHTML = `
+          <button type="button" class="btn btn-success" onclick="saveDemoSession()">
+            <i class="bi bi-save me-1"></i> Save Training
+          </button>
+          ${data.pdf_session_id ? `<button type="button" class="btn btn-primary" onclick="viewPDF('${data.pdf_session_id}')">
+            <i class="bi bi-file-pdf me-1"></i> View PDF
+          </button>` : ''}
+        `;
+      } else {
+        // Production mode buttons
+        bottomActions.innerHTML = `
+          ${data.pdf_session_id ? `<button type="button" class="btn btn-primary" onclick="viewPDF('${data.pdf_session_id}')">
+            <i class="bi bi-file-pdf me-1"></i> View PDF
+          </button>` : ''}
+          <button type="button" class="btn btn-success btn-sm" onclick="viewGarageOutput()">
+            <i class="bi bi-code-square me-1"></i> View Garage Output
+          </button>
+        `;
+      }
     }
     
     function toggleInstructions(index) {
       const content = document.getElementById(`instructions-${index}`);
+      const toggle = content.previousElementSibling;
+      content.classList.toggle('show');
+      toggle.classList.toggle('open');
+    }
+    
+    function toggleEvidence(index) {
+      const content = document.getElementById(`evidence-${index}`);
       const toggle = content.previousElementSibling;
       content.classList.toggle('show');
       toggle.classList.toggle('open');
@@ -2070,6 +3182,88 @@
       document.body.style.overflow = ''; // Restore scrolling
     }
     
+    function viewGarageOutput() {
+      if (!currentData || !currentData.garage_revenue_schedules) {
+        showStatus('error', '❌ No garage output available');
+        return;
+      }
+      const modal = document.getElementById('garageOutputModal');
+      const pre = document.getElementById('garageOutputJSON');
+      pre.textContent = JSON.stringify(currentData.garage_revenue_schedules, null, 2);
+      modal.classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+    
+    function closeGarageOutputModal(event) {
+      if (event && event.target !== event.currentTarget && !event.target.classList.contains('pdf-modal-close')) {
+        return;
+      }
+      const modal = document.getElementById('garageOutputModal');
+      modal.classList.remove('show');
+      document.body.style.overflow = '';
+    }
+    
+    // Demo & Configs Modal Functions
+    function openDemoConfigsModal() {
+      if (!currentMerchantId) {
+        showStatus('error', '❌ Please select a merchant first');
+        return;
+      }
+      document.getElementById('demoAuthModal').style.display = 'flex';
+      document.getElementById('demoApiKey').value = '';
+      document.getElementById('demoAuthError').style.display = 'none';
+    }
+    
+    function closeDemoAuthModal(event) {
+      if (event && event.target.id !== 'demoAuthModal' && !event.target.classList.contains('pdf-modal-close')) {
+        return;
+      }
+      document.getElementById('demoAuthModal').style.display = 'none';
+    }
+    
+    async function authenticateDemoAccess(event) {
+      event.preventDefault();
+      
+      const apiKey = document.getElementById('demoApiKey').value;
+      const errorDiv = document.getElementById('demoAuthError');
+      
+      try {
+        // Verify API key against merchant's stored key
+        const res = await fetch(`/api/merchant/${currentMerchantId}`);
+        const data = await res.json();
+        
+        if (!data.merchant) {
+          errorDiv.textContent = 'Merchant not found';
+          errorDiv.style.display = 'block';
+          return;
+        }
+        
+        // Check if API key matches (if merchant has one stored)
+        if (data.merchant.tabsApiKey && data.merchant.tabsApiKey !== apiKey) {
+          errorDiv.textContent = 'Invalid API key for this merchant';
+          errorDiv.style.display = 'block';
+          return;
+        }
+        
+        // If no API key is stored yet, save this one with default 'prod' environment
+        if (!data.merchant.tabsApiKey) {
+          await fetch(`/api/merchant/${currentMerchantId}/tabs-credentials`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tabs_api_key: apiKey, tabs_env: 'prod' })
+          });
+        }
+        
+        // Success - redirect to settings page
+        window.location.href = `/settings.html?merchant=${encodeURIComponent(currentMerchantId)}&verified=true`;
+        
+      } catch (error) {
+        console.error('Authentication error:', error);
+        errorDiv.textContent = 'Authentication failed: ' + error.message;
+        errorDiv.style.display = 'block';
+      }
+    }
+    
     // Calculate end date from start date + months (for rendering)
     function calculateEndDate(startDate, months) {
       if (!startDate) return '';
@@ -2192,5 +3386,8 @@
     loadMerchants();
     handleStageChange();
   </script>
+  
+  <!-- Bootstrap 5 JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

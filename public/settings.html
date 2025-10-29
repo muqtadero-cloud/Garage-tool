@@ -1,0 +1,2013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Merchant Settings - Garage</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    :root {
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --primary-light: #818cf8;
+      --success: #6ee7b7;
+      --success-hover: #34d399;
+      --warning: #fbbf24;
+      --danger: #fca5a5;
+      --bg-main: #f8fafc;
+      --bg-subtle: #f1f5f9;
+      --bg-card: #ffffff;
+      --sidebar-bg: #fefefe;
+      --sidebar-border: #e5e7eb;
+      --border: #e2e8f0;
+      --border-hover: #cbd5e1;
+      --text-primary: #0f172a;
+      --text-secondary: #64748b;
+      --text-muted: #94a3b8;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', sans-serif;
+      background: var(--bg-main);
+      min-height: 100vh;
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    
+    /* Authentication Gate */
+    #authGate {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    
+    .auth-card {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 3rem 2.5rem;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: var(--shadow-xl);
+      border: 1px solid var(--border);
+    }
+    
+    .auth-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    
+    .auth-logo {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+    
+    .auth-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+    
+    .auth-subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+    
+    /* Main Settings App - uses same structure as index.html but demo mode */
+    #settingsApp {
+      display: none;
+      width: 100%;
+      min-height: 100vh;
+    }
+    
+    .sidebar {
+      width: 320px;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--sidebar-border);
+      padding: 0;
+      overflow-y: auto;
+      box-shadow: var(--shadow-sm);
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+    
+    .sidebar-header {
+      padding: 1.25rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-card);
+    }
+    
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      padding: 0.5rem;
+      border-radius: 8px;
+    }
+    
+    .sidebar-brand:hover {
+      background: var(--bg-subtle);
+    }
+    
+    .brand-icon {
+      font-size: 1.5rem;
+      line-height: 1;
+    }
+    
+    .brand-text {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+    
+    .sidebar-content {
+      padding: 1.5rem 1rem;
+    }
+    
+    .stage-badge {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 0.625rem 0.875rem;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      text-align: center;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+    
+    .sidebar-section {
+      margin-bottom: 1.5rem;
+    }
+    
+    .sidebar-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 1.5rem 0;
+    }
+    
+    label {
+      display: block;
+      color: var(--text-secondary);
+      font-size: 0.813rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.01em;
+    }
+    
+    .form-control, .form-select, input[type="text"], input[type="number"], input[type="date"], select, textarea {
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      padding: 0.625rem 0.875rem;
+      font-size: 0.875rem;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .form-control:focus, .form-select:focus, input:focus, select:focus, textarea:focus {
+      border-color: var(--primary);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+    
+    .form-control:hover, .form-select:hover, input:hover, select:hover, textarea:hover {
+      border-color: var(--border-hover);
+    }
+    
+    .upload-area {
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 1.5rem 1rem;
+      text-align: center;
+      background: var(--bg-subtle);
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      margin-bottom: 1rem;
+    }
+    
+    .upload-area:hover {
+      border-color: var(--primary);
+      background: var(--bg-card);
+    }
+    
+    .upload-icon {
+      font-size: 2rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+    
+    .upload-text {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+    
+    .btn {
+      border-radius: 8px;
+      padding: 0.625rem 1.25rem;
+      font-weight: 600;
+      font-size: 0.875rem;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: var(--shadow-sm);
+      letter-spacing: -0.01em;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+    
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+    
+    .btn-success:hover {
+      background: var(--success-hover);
+    }
+    
+    .btn-outline-secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+    
+    .btn-outline-secondary:hover {
+      background: var(--bg-subtle);
+      border-color: var(--border-hover);
+    }
+    
+    .btn-toggle-active {
+      background: var(--primary) !important;
+      color: white !important;
+      border: 1px solid var(--primary);
+    }
+    
+    .btn-toggle-inactive {
+      background: var(--bg-card) !important;
+      color: var(--text-secondary) !important;
+      border: 1px solid var(--border);
+    }
+    
+    .main-content {
+      flex: 1;
+      padding: 2rem;
+      width: 100%;
+      max-width: 100%;
+    }
+    
+    .container {
+      max-width: 100%;
+      width: 100%;
+      padding: 0;
+    }
+    
+    #status {
+      padding: 1rem 1.5rem;
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      display: none;
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .card {
+      background: var(--bg-card);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      margin-bottom: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .card:hover {
+      box-shadow: var(--shadow-md);
+      border-color: var(--border-hover);
+    }
+    
+    .card-body {
+      padding: 1.5rem;
+    }
+    
+    /* Bootstrap Switch for consistency toggle */
+    .form-check-input:checked {
+      background-color: var(--primary);
+      border-color: var(--primary);
+    }
+    
+    .consistency-toggle-btn {
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      font-size: 0.813rem;
+      font-weight: 500;
+    }
+    
+    .consistency-toggle-btn:hover {
+      border-color: var(--primary);
+      background: var(--bg-card);
+    }
+    
+    .consistency-toggle-btn.consistency-active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+    
+    /* Schedule item styling */
+    .schedule-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .schedule-item:hover {
+      border-color: var(--border-hover);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .schedule-header {
+      padding: 1rem 1.25rem;
+      background: var(--bg-subtle);
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .schedule-header:hover {
+      background: var(--bg-card);
+    }
+    
+    .schedule-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+    }
+    
+    .toggle-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text-secondary);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .schedule-header:hover .toggle-icon {
+      background: var(--bg-subtle);
+      color: var(--primary);
+    }
+    
+    .schedule-item.open .toggle-icon {
+      transform: rotate(90deg);
+      color: var(--primary);
+    }
+    
+    .schedule-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .schedule-item.open .schedule-content {
+      max-height: 10000px;
+    }
+    
+    .section {
+      padding: 1.5rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .section:last-child {
+      border-bottom: none;
+    }
+    
+    .section-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+      letter-spacing: -0.01em;
+    }
+    
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    
+    .form-row:last-child {
+      margin-bottom: 0;
+    }
+    
+    /* Instructions toggle */
+    .instructions-toggle {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.875rem 1rem;
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      position: relative;
+      text-align: left;
+    }
+    
+    .instructions-toggle::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 40%;
+      background: var(--primary);
+      border-radius: 2px;
+      transition: height 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .instructions-toggle:hover::before {
+      height: 60%;
+    }
+    
+    .instructions-toggle:hover {
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+    }
+    
+    .instructions-toggle.open {
+      color: var(--primary);
+    }
+    
+    .instructions-toggle .toggle-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .instructions-toggle .toggle-icon i {
+      font-size: 1.125rem;
+      font-weight: 600;
+    }
+    
+    .instructions-toggle.open .toggle-icon {
+      transform: rotate(180deg);
+      color: var(--primary);
+    }
+    
+    .instructions-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      padding: 0 1.25rem;
+    }
+    
+    .instructions-content.open {
+      max-height: 2000px;
+      padding: 1rem 1.25rem 1.5rem;
+      animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .badge {
+      display: inline-block;
+      padding: 0.375rem 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-radius: 6px;
+      letter-spacing: -0.01em;
+    }
+    
+    /* Bottom action buttons */
+    .bottom-actions {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      display: flex;
+      gap: 0.75rem;
+      z-index: 1000;
+    }
+    
+    .bottom-actions .btn {
+      box-shadow: var(--shadow-xl);
+      backdrop-filter: blur(10px);
+    }
+    
+    .bottom-actions .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Accordion styling from Bootstrap */
+    .accordion-button {
+      font-size: 0.875rem;
+      font-weight: 600;
+      padding: 1rem 1.25rem;
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+      border: none;
+    }
+    
+    .accordion-button:not(.collapsed) {
+      background: var(--bg-card);
+      color: var(--primary);
+      box-shadow: none;
+    }
+    
+    .accordion-button:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+    
+    .accordion-body {
+      padding: 1.5rem 1.25rem;
+    }
+    
+    /* PDF Modal */
+    .pdf-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      z-index: 10000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    
+    .pdf-modal-content {
+      background: var(--bg-card);
+      border-radius: 16px;
+      width: 90%;
+      max-width: 1000px;
+      height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow-xl);
+    }
+    
+    .pdf-modal-header {
+      padding: 1.5rem 2rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .pdf-modal-header h3 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    
+    .pdf-modal-close {
+      padding: 0.5rem 1rem;
+      background: var(--danger);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.875rem;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .pdf-modal-close:hover {
+      background: #ef4444;
+      transform: translateY(-1px);
+    }
+    
+    .pdf-modal-body {
+      flex: 1;
+      padding: 0;
+      overflow: hidden;
+    }
+    
+    .pdf-modal-body iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    
+    /* Confirmation modal */
+    .confirmation-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      z-index: 10001;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    
+    .confirmation-modal {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 2rem;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: var(--shadow-xl);
+    }
+    
+    .confirmation-modal h3 {
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+    
+    .confirmation-modal p {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+      line-height: 1.6;
+    }
+    
+    .confirmation-buttons {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+      justify-content: flex-end;
+    }
+  </style>
+</head>
+<body>
+  <!-- Authentication Gate -->
+  <div id="authGate">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="auth-logo">🚗</div>
+        <h1 class="auth-title">Merchant Settings</h1>
+        <p class="auth-subtitle">Enter your Tabs API key to access training and configuration</p>
+      </div>
+      
+      <form onsubmit="authenticate(event)">
+        <div class="mb-3">
+          <label for="merchantSelect" class="form-label">Select Merchant</label>
+          <select id="merchantSelect" class="form-select" required>
+            <option value="">Loading merchants...</option>
+          </select>
+        </div>
+        
+        <div class="mb-3">
+          <label for="apiKey" class="form-label">Tabs API Key</label>
+          <input type="password" id="apiKey" class="form-control" placeholder="Enter your Tabs API key" required>
+        </div>
+        
+        <button type="submit" class="btn btn-primary w-100">
+          <i class="bi bi-unlock me-2"></i> Access Settings
+        </button>
+        
+        <div id="authError" class="alert alert-danger mt-3" style="display:none;"></div>
+      </form>
+      
+      <div class="text-center mt-3">
+        <button type="button" class="btn btn-link" onclick="window.location.href='/'">
+          <i class="bi bi-arrow-left me-1"></i> Back to Production
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Settings App (Demo Mode) -->
+  <div id="settingsApp" style="display:flex;">
+  <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand" onclick="window.location.href='/'">
+        <span class="brand-icon">🚗</span>
+        <span class="brand-text">Garage</span>
+      </div>
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="logout()">
+          <i class="bi bi-box-arrow-right"></i>
+        </button>
+    </div>
+    
+    <div class="sidebar-content">
+        <form id="uploadForm">
+          <div class="stage-badge">
+            🎓 DEMO MODE: Training Session
+          </div>
+          
+          <!-- Merchant Selection -->
+      <div class="sidebar-section">
+            <label>Current Merchant</label>
+            <select id="merchantDisplaySelect" class="form-select" onchange="handleMerchantChange()">
+              <option value="">Loading...</option>
+        </select>
+      </div>
+      
+      <div class="sidebar-divider"></div>
+      
+          <!-- Merchant Settings (Tier) -->
+          <div class="sidebar-section">
+            <label>Merchant Tier</label>
+            <select id="merchantTier" class="form-select" onchange="saveMerchantTier()">
+              <option value="tier1">Tier 1</option>
+              <option value="tier2">Tier 2</option>
+              <option value="tier3">Tier 3</option>
+            </select>
+          </div>
+          
+          <div class="sidebar-divider"></div>
+      
+          <!-- Load Previous Training -->
+          <div class="sidebar-section">
+            <button type="button" class="btn btn-outline-secondary w-100" onclick="loadPreviousTraining()">
+              <i class="bi bi-clock-history me-2"></i> Load Previous Training
+      </button>
+          </div>
+          
+          <div class="sidebar-divider"></div>
+          
+          <!-- Contract Source Toggle -->
+          <div class="sidebar-section">
+            <label>Contract Source</label>
+            <div class="btn-toggle-group" style="display:flex;gap:0.5rem;margin-bottom:1rem;">
+              <button type="button" id="uploadToggle" class="btn btn-sm btn-toggle-active" onclick="showUploadMode()">Upload PDF</button>
+              <button type="button" id="tabsToggle" class="btn btn-sm btn-toggle-inactive" onclick="showTabsMode()">From Tabs</button>
+            </div>
+            
+            <!-- Upload Mode -->
+            <div id="uploadMode">
+              <div class="upload-area" onclick="document.getElementById('file').click()">
+                <div class="upload-icon">📄</div>
+                <p class="upload-text">Click to upload PDF</p>
+                <input type="file" id="file" name="file" accept=".pdf" style="display:none;">
+              </div>
+              <div id="fileName" style="font-size:0.75rem;color:var(--text-secondary);margin-top:0.5rem;"></div>
+            </div>
+            
+            <!-- Tabs Mode -->
+            <div id="tabsMode" style="display:none;">
+              <input type="text" id="contractID" class="form-control" placeholder="Contract ID" style="margin-bottom:0.5rem;">
+              <select id="tabsEnvDemo" class="form-control" style="font-size:0.813rem;margin-bottom:0.5rem;">
+                <option value="prod">Production</option>
+                <option value="dev">Development</option>
+              </select>
+              <div id="tabsStatus" style="font-size:0.75rem;color:var(--text-secondary);margin-top:0.5rem;"></div>
+            </div>
+          </div>
+          
+          <!-- Model Selection -->
+          <div class="sidebar-section">
+            <label>AI Model</label>
+            <select id="model" class="form-select">
+              <option value="gpt-5" selected>GPT-5</option>
+              <option value="gpt-5-thinking">GPT-5 Thinking</option>
+              <option value="o3">o3</option>
+            </select>
+          </div>
+      
+      <div class="sidebar-divider"></div>
+      
+          <!-- Submit Button -->
+          <button type="submit" id="submitBtn" class="btn btn-primary w-100">
+            <i class="bi bi-cpu me-2"></i> Extract Contract Data
+      </button>
+        </form>
+    </div>
+  </div>
+
+    <!-- Main Content Area -->
+  <div class="main-content">
+    <div class="container">
+        <div id="status"></div>
+        <div id="results"></div>
+        
+        <!-- Guidance Section (shown after extraction) -->
+        <div id="guidanceSection" style="display:none;margin-top:2rem;">
+          <div class="card">
+            <div class="card-body">
+              <h3 style="margin-bottom:1.5rem;font-size:1.25rem;font-weight:700;">
+                <i class="bi bi-lightbulb me-2" style="color:var(--warning);"></i>
+                Field-Specific Guidance for <span id="merchantName" style="color:var(--primary);"></span>
+              </h3>
+              
+              <!-- MIS Upload Section -->
+              <div id="misUploadContainer" style="margin-bottom:2rem;">
+                <div style="background:var(--bg-subtle);padding:1.25rem;border-radius:12px;border:1px solid var(--border);">
+                  <label style="font-weight:600;margin-bottom:0.75rem;">Upload MIS Document (Auto-extract Instructions)</label>
+                  <div style="display:flex;gap:0.75rem;align-items:flex-start;">
+                    <input type="file" id="misFile" accept=".pdf" class="form-control" style="flex:1;">
+                    <button type="button" class="btn btn-primary" onclick="uploadMIS()">
+                      <i class="bi bi-upload me-1"></i> Extract
+                    </button>
+                  </div>
+                  <div id="misStatus" style="margin-top:0.75rem;font-size:0.813rem;"></div>
+                </div>
+      </div>
+      
+              <!-- General Guidance -->
+              <div style="margin-bottom:1.5rem;">
+                <label>General Guidance</label>
+                <textarea id="guid_general" class="form-control" rows="4" placeholder="Add general instructions for this merchant..."></textarea>
+      </div>
+      
+              <!-- Default Value Overrides (Collapsible) -->
+              <div class="accordion mb-3" id="defaultOverridesAccordion">
+                <div class="accordion-item">
+                  <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#defaultOverridesCollapse">
+                      <i class="bi bi-sliders me-2"></i> Default Value Overrides
+                    </button>
+                  </h2>
+                  <div id="defaultOverridesCollapse" class="accordion-collapse collapse" data-bs-parent="#defaultOverridesAccordion">
+                    <div class="accordion-body">
+                      <p style="font-size:0.813rem;color:var(--text-secondary);margin-bottom:1rem;">
+                        Set default values to override model output in Garage API output.
+                      </p>
+                      <div class="form-row">
+                        <div>
+                          <label>Net Terms (days)</label>
+                          <input type="number" id="default_net_terms" class="form-control" placeholder="e.g., 30">
+              </div>
+                        <div>
+                          <label>Number of Periods</label>
+                          <input type="number" id="default_periods" class="form-control" placeholder="e.g., 12">
+            </div>
+              </div>
+            </div>
+              </div>
+            </div>
+          </div>
+          
+              <!-- Field Exclusions (Collapsible) -->
+              <div class="accordion mb-3" id="exclusionsAccordion">
+                <div class="accordion-item">
+                  <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#exclusionsCollapse">
+                      <i class="bi bi-x-circle me-2"></i> Field Exclusions
+          </button>
+                  </h2>
+                  <div id="exclusionsCollapse" class="accordion-collapse collapse" data-bs-parent="#exclusionsAccordion">
+                    <div class="accordion-body">
+                      <p style="font-size:0.813rem;color:var(--text-secondary);margin-bottom:1rem;">
+                        Toggle OFF to exclude fields from Garage API output.
+                      </p>
+                      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.75rem;">
+                        <div class="form-check form-switch">
+                          <input class="form-check-input exclude-field" type="checkbox" value="arrears" id="exclude_arrears">
+                          <label class="form-check-label" for="exclude_arrears">Arrears</label>
+          </div>
+                        <div class="form-check form-switch">
+                          <input class="form-check-input exclude-field" type="checkbox" value="integrations" id="exclude_integrations">
+                          <label class="form-check-label" for="exclude_integrations">Integrations</label>
+          </div>
+                        <div class="form-check form-switch">
+                          <input class="form-check-input exclude-field" type="checkbox" value="item_description" id="exclude_item_description">
+                          <label class="form-check-label" for="exclude_item_description">Item Description</label>
+        </div>
+      </div>
+          </div>
+          </div>
+                </div>
+          </div>
+          
+              <!-- Field-Specific Guidance (Collapsible) -->
+              <div class="accordion" id="guidanceAccordion">
+                <div class="accordion-item">
+                  <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#guidanceCollapse">
+                      <i class="bi bi-list-ul me-2"></i> Field-Specific Guidance
+          </button>
+                  </h2>
+                  <div id="guidanceCollapse" class="accordion-collapse collapse" data-bs-parent="#guidanceAccordion">
+                    <div class="accordion-body">
+                      <div class="form-row">
+                        <div>
+                          <label>Item Name</label>
+                          <textarea id="guid_item_name" class="form-control" rows="2"></textarea>
+              </div>
+                        <div>
+                          <label>Description</label>
+                          <textarea id="guid_description" class="form-control" rows="2"></textarea>
+        </div>
+      </div>
+                      <div class="form-row">
+                        <div>
+                          <label>Total Price</label>
+                          <textarea id="guid_total_price" class="form-control" rows="2"></textarea>
+          </div>
+                        <div>
+                          <label>Billing Type</label>
+                          <textarea id="guid_billing_type" class="form-control" rows="2"></textarea>
+          </div>
+          </div>
+                      <div class="form-row">
+                        <div>
+                          <label>Quantity</label>
+                          <textarea id="guid_quantity" class="form-control" rows="2"></textarea>
+                        </div>
+                        <div>
+                          <label>Start Date</label>
+                          <textarea id="guid_start_date" class="form-control" rows="2"></textarea>
+                        </div>
+                      </div>
+                      <div class="form-row">
+                        <div>
+                          <label>Frequency Unit</label>
+                          <textarea id="guid_frequency_unit" class="form-control" rows="2"></textarea>
+                        </div>
+                        <div>
+                          <label>Periods</label>
+                          <textarea id="guid_periods" class="form-control" rows="2"></textarea>
+                        </div>
+                      </div>
+                      <div class="form-row">
+                        <div>
+                          <label>Months of Service</label>
+                          <textarea id="guid_months_of_service" class="form-control" rows="2"></textarea>
+                        </div>
+                        <div>
+                          <label>Net Terms</label>
+                          <textarea id="guid_net_terms" class="form-control" rows="2"></textarea>
+                        </div>
+                      </div>
+                      <div class="form-row">
+                        <div>
+                          <label>Billing Timing</label>
+                          <textarea id="guid_billing_timing" class="form-control" rows="2"></textarea>
+                        </div>
+                        <div>
+                          <label>Event to Track</label>
+                          <textarea id="guid_event_to_track" class="form-control" rows="2"></textarea>
+                        </div>
+                      </div>
+                      <button type="button" class="btn btn-success w-100 mt-2" onclick="saveFieldGuidance()">
+                        <i class="bi bi-check-circle me-2"></i> Save Guidance
+          </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+            </div>
+            
+  <!-- Confirmation Modal -->
+  <div id="confirmationOverlay" class="confirmation-overlay">
+    <div class="confirmation-modal">
+      <h3>⚠️ Confirm Training Data</h3>
+      <p>You are about to save this as training data for the AI model.</p>
+      <p>This training session will be used as reference material for future contract processing.</p>
+      <p><strong>Important:</strong> If this data is incorrect or filled incorrectly, the AI model might hallucinate or make similar mistakes on future contracts. Please double-check all fields before saving.</p>
+      <div class="confirmation-buttons">
+        <button class="btn" style="background:#718096;color:white;" onclick="closeConfirmation()">Cancel</button>
+        <button class="btn btn-success" onclick="confirmSave()">
+          <i class="bi bi-check-circle me-1"></i> Confirm & Save
+        </button>
+              </div>
+        </div>
+            </div>
+            
+  <!-- PDF Modal -->
+  <div id="pdfModal" class="pdf-modal" onclick="closePDFModal(event)">
+    <div class="pdf-modal-content" onclick="event.stopPropagation()">
+      <div class="pdf-modal-header">
+        <h3>Contract PDF</h3>
+        <button class="pdf-modal-close" onclick="closePDFModal()">✕ Close</button>
+              </div>
+      <div class="pdf-modal-body">
+        <iframe id="pdfViewer" src=""></iframe>
+      </div>
+            </div>
+          </div>
+          
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    let currentMerchantId = null;
+    let currentApiKey = null;
+    let currentApiEnv = null;
+    let allMerchants = [];
+    let currentData = null;
+    let currentStage = 'demo'; // Always demo mode in settings
+    
+    // Load merchants on page load
+    async function loadMerchants() {
+      try {
+        const res = await fetch('/api/list-merchants');
+        const data = await res.json();
+        allMerchants = data.merchants || [];
+        
+        const select = document.getElementById('merchantSelect');
+        select.innerHTML = '<option value="">-- Select a Merchant --</option>';
+        allMerchants.forEach(merchant => {
+          const option = document.createElement('option');
+          option.value = merchant.id;
+          option.textContent = merchant.name;
+          select.appendChild(option);
+        });
+      } catch (error) {
+        console.error('Failed to load merchants:', error);
+      }
+    }
+
+    // Authenticate with API key
+    async function authenticate(event) {
+      event.preventDefault();
+      
+      const merchantId = document.getElementById('merchantSelect').value;
+      const apiKey = document.getElementById('apiKey').value;
+      
+      if (!merchantId || !apiKey) {
+        showAuthError('Please select a merchant and enter API key');
+        return;
+      }
+      
+      // Verify API key against merchant's stored key
+      try {
+        const res = await fetch(`/api/merchant/${merchantId}`);
+        const data = await res.json();
+        
+        if (!data.merchant) {
+          showAuthError('Merchant not found');
+          return;
+        }
+        
+        // Check if API key matches (if merchant has one stored)
+        if (data.merchant.tabsApiKey && data.merchant.tabsApiKey !== apiKey) {
+          showAuthError('Invalid API key for this merchant');
+          return;
+        }
+        
+        // If no API key is stored yet, save this one with default 'prod' environment
+        if (!data.merchant.tabsApiKey) {
+          await fetch(`/api/merchant/${merchantId}/tabs-credentials`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tabs_api_key: apiKey, tabs_env: 'prod' })
+          });
+        }
+        
+        // Success - proceed to settings app
+        currentMerchantId = merchantId;
+        currentApiKey = apiKey;
+        currentApiEnv = 'prod';
+        
+        // Show settings app
+        document.getElementById('authGate').style.display = 'none';
+        document.getElementById('settingsApp').style.display = 'flex';
+        
+        // Populate merchant dropdown
+        populateMerchantDropdown();
+        document.getElementById('merchantDisplaySelect').value = merchantId;
+        
+        // Load field guidance and tier
+        await loadFieldGuidance();
+        await loadMerchantTier();
+        
+      } catch (error) {
+        console.error('Authentication error:', error);
+        showAuthError('Authentication failed: ' + error.message);
+      }
+    }
+
+    function showAuthError(message) {
+      const errorDiv = document.getElementById('authError');
+      errorDiv.textContent = message;
+      errorDiv.style.display = 'block';
+      setTimeout(() => {
+        errorDiv.style.display = 'none';
+      }, 5000);
+    }
+
+    function populateMerchantDropdown() {
+      const select = document.getElementById('merchantDisplaySelect');
+      select.innerHTML = '';
+      allMerchants.forEach(merchant => {
+          const option = document.createElement('option');
+          option.value = merchant.id;
+        option.textContent = `🏢 ${merchant.name}`;
+          select.appendChild(option);
+        });
+    }
+
+    function handleMerchantChange() {
+      const newMerchantId = document.getElementById('merchantDisplaySelect').value;
+      if (!newMerchantId || newMerchantId === currentMerchantId) return;
+      
+      // Clear results
+      document.getElementById('results').innerHTML = '';
+      const bottomActions = document.querySelector('.bottom-actions');
+      if (bottomActions) bottomActions.remove();
+      
+      currentMerchantId = newMerchantId;
+      loadFieldGuidance();
+    }
+
+    // Logout
+    function logout() {
+      currentMerchantId = null;
+      currentApiKey = null;
+      currentApiEnv = null;
+      
+      document.getElementById('authGate').style.display = 'flex';
+      document.getElementById('settingsApp').style.display = 'none';
+      document.getElementById('apiKey').value = '';
+    }
+
+    // Toggle functions
+    function showUploadMode() {
+      document.getElementById('uploadMode').style.display = 'block';
+      document.getElementById('tabsMode').style.display = 'none';
+      
+      const uploadBtn = document.getElementById('uploadToggle');
+      const tabsBtn = document.getElementById('tabsToggle');
+      
+      uploadBtn.className = 'btn btn-sm btn-toggle-active';
+      tabsBtn.className = 'btn btn-sm btn-toggle-inactive';
+      
+      document.getElementById('file').required = false;
+    }
+    
+    function showTabsMode() {
+      document.getElementById('uploadMode').style.display = 'none';
+      document.getElementById('tabsMode').style.display = 'block';
+      
+      const uploadBtn = document.getElementById('uploadToggle');
+      const tabsBtn = document.getElementById('tabsToggle');
+      
+      uploadBtn.className = 'btn btn-sm btn-toggle-inactive';
+      tabsBtn.className = 'btn btn-sm btn-toggle-active';
+      
+      document.getElementById('file').required = false;
+    }
+    
+    // File input handler
+    document.getElementById('file').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        document.getElementById('fileName').textContent = `📄 ${file.name}`;
+      }
+    });
+
+    // Form submission
+    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      if (!currentMerchantId) {
+        showStatus('error', '❌ No merchant selected');
+        return;
+      }
+      
+      const isTabsMode = document.getElementById('tabsMode').style.display !== 'none';
+      
+      showStatus('info', '⏳ Processing contract...');
+      
+      try {
+        let res, data;
+        
+        if (isTabsMode) {
+          // From Tabs mode
+          const contractID = document.getElementById('contractID').value.trim();
+          if (!contractID) {
+            showStatus('error', '❌ Please enter a Contract ID');
+            return;
+          }
+          
+          res = await fetch('/api/extract-from-tabs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              merchantId: currentMerchantId,
+              contractID,
+              model: document.getElementById('model').value,
+              stage: 'demo',
+              tabsEnv: document.getElementById('tabsEnvDemo').value
+            })
+          });
+          
+          data = await res.json();
+        } else {
+          // Upload mode
+          const file = document.getElementById('file').files[0];
+          if (!file) {
+            showStatus('error', '❌ Please select a PDF file');
+            return;
+          }
+          
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('model', document.getElementById('model').value);
+          formData.append('merchantId', currentMerchantId);
+          formData.append('stage', 'demo');
+          formData.append('consistency', 'consistent');
+          
+          res = await fetch('/api/extract', {
+            method: 'POST',
+            body: formData
+          });
+          
+          data = await res.json();
+        }
+        
+        if (!res.ok) throw new Error(data.error || 'Extraction failed');
+        
+        currentData = data;
+        
+        // Store original AI extraction for comparison
+        if (currentData.schedules) {
+          currentData.schedules.forEach(schedule => {
+            schedule.original_ai_extraction = {
+              ...schedule,
+              tiers: schedule.tiers ? JSON.parse(JSON.stringify(schedule.tiers)) : []
+            };
+          });
+        }
+        
+        renderResults(data);
+        
+        // Show guidance section
+        document.getElementById('guidanceSection').style.display = 'block';
+        document.getElementById('merchantName').textContent = currentMerchantId;
+        document.getElementById('misUploadContainer').style.display = 'block';
+        
+        // Load guidance
+        await loadFieldGuidance();
+        
+        showStatus('success', `✅ Extracted ${data.schedules.length} revenue schedule(s)`);
+        
+      } catch (error) {
+        console.error('Extraction error:', error);
+        showStatus('error', '❌ ' + error.message);
+      }
+    });
+
+    function showStatus(type, message) {
+      const status = document.getElementById('status');
+      status.style.display = 'block';
+      status.textContent = message;
+      
+      status.className = '';
+      if (type === 'success') {
+        status.style.background = 'linear-gradient(135deg, #d4fce3 0%, #e0f7fa 100%)';
+        status.style.color = '#047857';
+        status.style.border = '1px solid #10b981';
+      } else if (type === 'error') {
+        status.style.background = 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)';
+        status.style.color = '#991b1b';
+        status.style.border = '1px solid #f87171';
+      } else {
+        status.style.background = 'linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%)';
+        status.style.color = '#1e40af';
+        status.style.border = '1px solid #60a5fa';
+      }
+      
+      setTimeout(() => {
+        status.style.display = 'none';
+      }, 5000);
+    }
+
+    function renderResults(data) {
+      const results = document.getElementById('results');
+      
+      if (!data.schedules || data.schedules.length === 0) {
+        results.innerHTML = '<div class="card"><div class="card-body" style="text-align:center;color:#718096;">No schedules found</div></div>';
+        return;
+      }
+      
+      results.innerHTML = '';
+      
+      data.schedules.forEach((schedule, index) => {
+        // Format evidence for display
+        let evidenceHtml = '';
+        if (schedule.extraction_reasoning) {
+          evidenceHtml += `<div style="margin-bottom:1rem;"><strong>Extraction Reasoning:</strong><br>${esc(schedule.extraction_reasoning)}</div>`;
+        }
+        if (schedule.evidence && Array.isArray(schedule.evidence) && schedule.evidence.length > 0) {
+          evidenceHtml += '<div><strong>Evidence from Contract:</strong></div>';
+          schedule.evidence.forEach((ev, evIdx) => {
+            evidenceHtml += `<div style="margin:0.5rem 0;padding-left:1rem;border-left:3px solid var(--primary);">
+              <div><strong>Page ${ev.page}</strong> - ${ev.field_supported || 'General'}</div>
+              <div style="font-style:italic;color:var(--text-muted);">"${esc(ev.snippet)}"</div>
+            </div>`;
+          });
+        }
+        if (!evidenceHtml) {
+          evidenceHtml = 'No evidence provided';
+        }
+        
+        const item = document.createElement('div');
+        item.className = 'schedule-item open';
+        item.id = `schedule-${index}`;
+        
+        item.innerHTML = `
+          <div class="schedule-header" onclick="toggleSchedule(${index})">
+            <div class="schedule-title">Revenue Schedule ${index + 1}: ${schedule.item_name || 'Unnamed'}</div>
+            <div class="toggle-icon">
+              <i class="bi bi-chevron-right"></i>
+            </div>
+          </div>
+          
+          <div class="schedule-content">
+            <!-- Evidence Section (Collapsible) -->
+            <button class="instructions-toggle" onclick="toggleEvidence(${index})">
+              <span><i class="bi bi-file-text me-2"></i> Evidence from Contract</span>
+              <span class="toggle-icon"><i class="bi bi-chevron-down"></i></span>
+            </button>
+            <div id="evidence-${index}" class="instructions-content">
+              <div style="background:var(--bg-subtle);padding:1rem;border-radius:8px;border:1px solid var(--border);font-size:0.875rem;line-height:1.6;color:var(--text-secondary);margin-top:0.5rem;">
+                ${evidenceHtml}
+          </div>
+            </div>
+            
+            <div class="section">
+              <div class="section-title">Edit & Add Instructions</div>
+              
+              <div class="form-row">
+                <div style="grid-column: span 2;">
+                  <label>Item Name</label>
+                  <input type="text" value="${esc(schedule.item_name || '')}" data-field="item_name" data-index="${index}">
+        </div>
+      </div>
+      
+              <div class="form-row">
+                <div style="grid-column: span 2;">
+                  <label>Item Description (optional)</label>
+                  <textarea data-field="description" data-index="${index}" style="min-height:60px;">${esc(schedule.description || '')}</textarea>
+                </div>
+          </div>
+          
+              <div class="form-row">
+                <div>
+                  <label>Billing Type</label>
+                  <select data-field="billing_type" data-index="${index}" onchange="toggleBillingFields(${index})">
+                    <option ${schedule.billing_type === 'Flat price' ? 'selected' : ''}>Flat price</option>
+                    <option ${schedule.billing_type === 'Unit price' ? 'selected' : ''}>Unit price</option>
+                    <option ${schedule.billing_type === 'Tier flat price' ? 'selected' : ''}>Tier flat price</option>
+                    <option ${schedule.billing_type === 'Tier unit price' ? 'selected' : ''}>Tier unit price</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Total Price</label>
+                  <input type="number" step="0.01" value="${schedule.total_price || 0}" data-field="total_price" data-index="${index}">
+                </div>
+                <div>
+                  <label>Quantity</label>
+                  <input type="number" value="${schedule.quantity || 1}" data-field="quantity" data-index="${index}">
+                </div>
+              </div>
+              
+              <div class="form-row">
+                <div>
+                  <label>Start Date</label>
+                  <input type="date" value="${schedule.start_date || ''}" data-field="start_date" data-index="${index}" onchange="calculateEndDate(${index})">
+                </div>
+                <div>
+                  <label># Periods</label>
+                  <input type="number" value="${schedule.periods || 1}" data-field="periods" data-index="${index}">
+                </div>
+                <div>
+                  <label>Frequency</label>
+                  <div style="display:flex;gap:0.5rem;align-items:center;">
+                    <span style="font-size:0.875rem;">every</span>
+                    <input type="number" value="${schedule.frequency_every || 1}" data-field="frequency_every" data-index="${index}" style="width:60px;">
+                    <select data-field="frequency_unit" data-index="${index}" style="flex:1;">
+                      <option ${schedule.frequency_unit === 'None' ? 'selected' : ''}>None</option>
+                      <option ${schedule.frequency_unit === 'Day(s)' ? 'selected' : ''}>Day(s)</option>
+                      <option ${schedule.frequency_unit === 'Week(s)' ? 'selected' : ''}>Week(s)</option>
+                      <option ${schedule.frequency_unit === 'Month(s)' ? 'selected' : ''}>Month(s)</option>
+                      <option ${schedule.frequency_unit === 'Quarter(s)' ? 'selected' : ''}>Quarter(s)</option>
+                      <option ${schedule.frequency_unit === 'Year(s)' ? 'selected' : ''}>Year(s)</option>
+            </select>
+                  </div>
+                </div>
+          </div>
+          
+              <div class="form-row">
+                <div>
+                  <label>Calculated End Date</label>
+                  <input type="date" id="calc-end-date-${index}" value="${schedule.end_date || ''}" readonly style="background:var(--bg-subtle);">
+                </div>
+                <div>
+                  <label>Net Terms (days)</label>
+                  <input type="number" value="${schedule.net_terms || 0}" data-field="net_terms" data-index="${index}">
+                </div>
+                <div>
+                  <label>Billing Timing</label>
+                  <select data-field="billing_timing" data-index="${index}">
+                    <option value="first" ${!schedule.billing_timing || schedule.billing_timing === 'first' || schedule.arrears === false ? 'selected' : ''}>Bill first of period</option>
+                    <option value="last" ${schedule.billing_timing === 'last' || schedule.arrears === true ? 'selected' : ''}>Bill last of period</option>
+                    <option value="next_period" ${schedule.billing_timing === 'next_period' ? 'selected' : ''}>Bill first of next period</option>
+            </select>
+                </div>
+          </div>
+          
+              <div class="form-row">
+                <div>
+                  <label>Months of Service (Service Term)</label>
+                  <input type="number" value="${schedule.months_of_service || 12}" data-field="months_of_service" data-index="${index}" onchange="calculateEndDate(${index})">
+                </div>
+              </div>
+              
+              <div id="event-track-${index}" class="form-row" style="display:${schedule.billing_type !== 'Flat price' ? 'grid' : 'none'};">
+                <div style="grid-column: span 2;">
+                  <label>Event to Track (for usage/overage)</label>
+                  <input type="text" value="${esc(schedule.event_to_track || (schedule.item_name ? schedule.item_name + ' overage' : ''))}" data-field="event_to_track" data-index="${index}" placeholder="${esc((schedule.item_name || 'Item') + ' overage')}">
+          </div>
+        </div>
+      </div>
+      
+            <!-- Instructions Section (Collapsible) -->
+            <button class="instructions-toggle" onclick="toggleInstructions(${index})">
+              <span><i class="bi bi-lightbulb me-2"></i> Field-Specific Guidance & Instructions</span>
+              <span class="toggle-icon"><i class="bi bi-chevron-down"></i></span>
+            </button>
+            <div id="instructions-${index}" class="instructions-content">
+              <div style="margin-top:0.5rem;">
+                <label style="font-weight:600;margin-bottom:1rem;display:block;">Why did you change these fields? What should the AI do differently next time?</label>
+                
+                <div class="form-row" style="margin-bottom:1rem;">
+                  <div>
+                    <label>Item Name Guidance</label>
+                    <textarea data-field="field_guidance_item_name" data-index="${index}" rows="2" placeholder="e.g., 'Extract as shown in Exhibit A'">${esc(schedule.field_guidance_item_name || '')}</textarea>
+                  </div>
+                  <div>
+                    <label>Description Guidance</label>
+                    <textarea data-field="field_guidance_description" data-index="${index}" rows="2" placeholder="e.g., 'Use description from section 2'">${esc(schedule.field_guidance_description || '')}</textarea>
+                  </div>
+          </div>
+          
+                <div class="form-row" style="margin-bottom:1rem;">
+                  <div>
+                    <label>Total Price Guidance</label>
+                    <textarea data-field="field_guidance_total_price" data-index="${index}" rows="2" placeholder="e.g., 'Calculate from monthly * 12'">${esc(schedule.field_guidance_total_price || '')}</textarea>
+                  </div>
+                  <div>
+                    <label>Billing Type Guidance</label>
+                    <textarea data-field="field_guidance_billing_type" data-index="${index}" rows="2" placeholder="e.g., 'Always use Flat price for monthly fees'">${esc(schedule.field_guidance_billing_type || '')}</textarea>
+                  </div>
+          </div>
+          
+                <div class="form-row" style="margin-bottom:1rem;">
+                  <div>
+                    <label>Start Date Guidance</label>
+                    <textarea data-field="field_guidance_start_date" data-index="${index}" rows="2" placeholder="e.g., 'Use Effective Date from page 1'">${esc(schedule.field_guidance_start_date || '')}</textarea>
+                  </div>
+                  <div>
+                    <label>Frequency Guidance</label>
+                    <textarea data-field="field_guidance_frequency" data-index="${index}" rows="2" placeholder="e.g., 'Monthly unless stated otherwise'">${esc(schedule.field_guidance_frequency || '')}</textarea>
+                  </div>
+          </div>
+          
+                <div>
+                  <label>General Instructions for this Schedule</label>
+                  <textarea data-field="instructions" data-index="${index}" rows="3" placeholder="e.g., 'The AI incorrectly extracted the monthly fee. It should look at the second page, section 3.2 for pricing.'">${esc(schedule.instructions || '')}</textarea>
+          </div>
+        </div>
+      </div>
+            
+            <div class="section" style="border-top:1px dashed var(--border);padding-top:1.5rem;">
+              <button type="button" class="btn btn-danger" onclick="deleteSchedule(${index})" style="width:100%;">
+                <i class="bi bi-trash me-2"></i> Delete This Schedule
+              </button>
+    </div>
+  </div>
+        `;
+        
+        results.appendChild(item);
+      });
+      
+      // Add bottom action buttons
+      addBottomActions();
+    }
+
+    function addBottomActions() {
+      // Remove existing buttons if any
+      const existing = document.querySelector('.bottom-actions');
+      if (existing) existing.remove();
+      
+      const actions = document.createElement('div');
+      actions.className = 'bottom-actions';
+      actions.innerHTML = `
+        <button type="button" class="btn btn-primary" onclick="showConfirmation()" style="font-size:0.875rem;padding:0.75rem 1.5rem;">
+          <i class="bi bi-save me-2"></i> Save Training
+        </button>
+        <button type="button" class="btn btn-outline-secondary" onclick="showPDFModal()" style="font-size:0.875rem;padding:0.75rem 1.5rem;">
+          <i class="bi bi-file-pdf me-2"></i> View PDF
+        </button>
+      `;
+      document.body.appendChild(actions);
+    }
+
+    function toggleSchedule(index) {
+      const item = document.getElementById(`schedule-${index}`);
+      item.classList.toggle('open');
+    }
+
+    function toggleEvidence(index) {
+      const content = document.getElementById(`evidence-${index}`);
+      const toggle = content.previousElementSibling;
+      
+      content.classList.toggle('open');
+      toggle.classList.toggle('open');
+    }
+
+    function toggleInstructions(index) {
+      const content = document.getElementById(`instructions-${index}`);
+      const toggle = content.previousElementSibling;
+      
+      content.classList.toggle('open');
+      toggle.classList.toggle('open');
+    }
+
+    function toggleBillingFields(index) {
+      const billingType = document.querySelector(`select[data-field="billing_type"][data-index="${index}"]`).value;
+      const eventTrackRow = document.getElementById(`event-track-${index}`);
+      
+      if (billingType === 'Flat price') {
+        eventTrackRow.style.display = 'none';
+      } else {
+        eventTrackRow.style.display = 'grid';
+      }
+    }
+
+    function esc(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function deleteSchedule(index) {
+      if (!confirm('Are you sure you want to delete this schedule?')) return;
+      
+      currentData.schedules.splice(index, 1);
+      renderResults(currentData);
+    }
+
+    function calculateEndDate(index) {
+      const startDateInput = document.querySelector(`input[data-field="start_date"][data-index="${index}"]`);
+      const monthsInput = document.querySelector(`input[data-field="months_of_service"][data-index="${index}"]`);
+      const endDateInput = document.getElementById(`calc-end-date-${index}`);
+      
+      if (!startDateInput || !monthsInput || !endDateInput) return;
+      
+      const startDate = startDateInput.value;
+      const months = parseInt(monthsInput.value) || 0;
+      
+      if (!startDate || months === 0) {
+        endDateInput.value = '';
+        return;
+      }
+      
+      try {
+        const start = new Date(startDate);
+        const end = new Date(start);
+        end.setMonth(end.getMonth() + months);
+        
+        // Format as YYYY-MM-DD
+        const year = end.getFullYear();
+        const month = String(end.getMonth() + 1).padStart(2, '0');
+        const day = String(end.getDate()).padStart(2, '0');
+        endDateInput.value = `${year}-${month}-${day}`;
+      } catch (error) {
+        console.error('Error calculating end date:', error);
+        endDateInput.value = '';
+      }
+    }
+
+    async function loadPreviousTraining() {
+      if (!currentMerchantId) {
+        showStatus('error', '❌ No merchant selected');
+        return;
+      }
+      
+      showStatus('info', '⏳ Loading previous training session...');
+      
+      try {
+        const demoRes = await fetch(`/api/load-demo-session?merchantId=${encodeURIComponent(currentMerchantId)}`);
+        const demoData = await demoRes.json();
+        
+        if (!demoData.success || !demoData.demoSession) {
+          showStatus('error', `❌ No training session found for ${currentMerchantId}`);
+        return;
+      }
+      
+        currentData = {
+          schedules: demoData.demoSession.schedules || [],
+          system_prompt: demoData.demoSession.system_prompt_used,
+          garage_revenue_schedules: demoData.demoSession.garage_revenue_schedules,
+          pdf_session_id: demoData.demoSession.pdf_session_id,
+          model_used: 'loaded-from-training'
+        };
+        
+        renderResults(currentData);
+        
+        // Calculate end dates after rendering
+        setTimeout(() => {
+          currentData.schedules.forEach((schedule, index) => {
+            calculateEndDate(index);
+          });
+        }, 100);
+        
+        document.getElementById('guidanceSection').style.display = 'block';
+        document.getElementById('merchantName').textContent = currentMerchantId;
+        document.getElementById('misUploadContainer').style.display = 'block';
+        
+        await loadFieldGuidance();
+        
+        showStatus('success', `✅ Loaded training session with ${currentData.schedules.length} schedule(s)`);
+        
+      } catch (error) {
+        console.error('Load training error:', error);
+        showStatus('error', '❌ Failed to load training: ' + error.message);
+      }
+    }
+
+    async function uploadMIS() {
+      const fileInput = document.getElementById('misFile');
+      const file = fileInput.files[0];
+      
+      if (!file) {
+        showStatus('error', '❌ Please select a MIS document first');
+        return;
+      }
+      
+      if (!currentMerchantId) {
+        showStatus('error', '❌ Merchant not selected');
+        return;
+      }
+      
+      const misStatus = document.getElementById('misStatus');
+      misStatus.textContent = '⏳ Extracting instructions from MIS...';
+      misStatus.style.color = 'var(--text-secondary)';
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('merchantId', currentMerchantId);
+      
+      try {
+        const res = await fetch('/api/extract-mis-instructions', {
+          method: 'POST',
+          body: formData
+        });
+        
+        const data = await res.json();
+        
+        if (!res.ok) throw new Error(data.error || 'Failed to extract instructions');
+        
+        const generalGuidanceField = document.getElementById('guid_general');
+        if (generalGuidanceField && data.instructions) {
+          generalGuidanceField.value = data.instructions;
+          misStatus.textContent = '✅ Instructions extracted and populated in General Guidance!';
+          misStatus.style.color = '#38a169';
+          showStatus('success', `✅ MIS instructions extracted (${data.instructions.length} characters)`);
+        } else {
+          misStatus.textContent = '⚠️ No instructions found in MIS';
+          misStatus.style.color = '#d69e2e';
+        }
+      } catch (error) {
+        console.error('MIS upload error:', error);
+        misStatus.textContent = 'Failed to extract instructions';
+        misStatus.style.color = '#f87171';
+        showStatus('error', '❌ Failed to extract MIS instructions: ' + error.message);
+      }
+    }
+
+    async function loadFieldGuidance() {
+      if (!currentMerchantId) return;
+      
+      try {
+        const res = await fetch(`/api/load-guidance?merchantId=${encodeURIComponent(currentMerchantId)}`);
+        const data = await res.json();
+        
+        if (data.guidance && data.guidance.field_specific) {
+          const fs = data.guidance.field_specific;
+          document.getElementById('guid_item_name').value = fs.item_name || '';
+          document.getElementById('guid_description').value = fs.description || '';
+          document.getElementById('guid_total_price').value = fs.total_price || '';
+          document.getElementById('guid_billing_type').value = fs.billing_type || '';
+          document.getElementById('guid_quantity').value = fs.quantity || '';
+          document.getElementById('guid_start_date').value = fs.start_date || '';
+          document.getElementById('guid_frequency_unit').value = fs.frequency_unit || '';
+          document.getElementById('guid_periods').value = fs.periods || '';
+          document.getElementById('guid_months_of_service').value = fs.months_of_service || '';
+          document.getElementById('guid_net_terms').value = fs.net_terms || '';
+          document.getElementById('guid_billing_timing').value = fs.billing_timing || '';
+          document.getElementById('guid_event_to_track').value = fs.event_to_track || '';
+          document.getElementById('guid_general').value = fs.general || '';
+        }
+        
+        if (data.guidance && data.guidance.default_overrides) {
+          const defaults = data.guidance.default_overrides;
+          document.getElementById('default_net_terms').value = defaults.net_terms || '';
+          document.getElementById('default_periods').value = defaults.periods || '';
+        }
+        
+        if (data.guidance && data.guidance.excluded_fields) {
+          document.querySelectorAll('.exclude-field').forEach(cb => {
+            cb.checked = data.guidance.excluded_fields.includes(cb.value);
+          });
+        }
+      } catch (error) {
+        console.error('Failed to load guidance:', error);
+      }
+    }
+
+    async function saveFieldGuidance() {
+      const default_overrides = {};
+      const netTerms = document.getElementById('default_net_terms').value;
+      const periods = document.getElementById('default_periods').value;
+      
+      if (netTerms) default_overrides.net_terms = parseInt(netTerms);
+      if (periods) default_overrides.periods = parseInt(periods);
+      
+      const excluded_fields = Array.from(document.querySelectorAll('.exclude-field:checked'))
+        .map(cb => cb.value);
+      
+      const guidance = {
+        field_specific: {
+          item_name: document.getElementById('guid_item_name').value.trim(),
+          description: document.getElementById('guid_description').value.trim(),
+          total_price: document.getElementById('guid_total_price').value.trim(),
+          billing_type: document.getElementById('guid_billing_type').value.trim(),
+          quantity: document.getElementById('guid_quantity').value.trim(),
+          start_date: document.getElementById('guid_start_date').value.trim(),
+          frequency_unit: document.getElementById('guid_frequency_unit').value.trim(),
+          periods: document.getElementById('guid_periods').value.trim(),
+          months_of_service: document.getElementById('guid_months_of_service').value.trim(),
+          net_terms: document.getElementById('guid_net_terms').value.trim(),
+          billing_timing: document.getElementById('guid_billing_timing').value.trim(),
+          event_to_track: document.getElementById('guid_event_to_track').value.trim(),
+          general: document.getElementById('guid_general').value.trim()
+        },
+        default_overrides,
+        excluded_fields,
+        system_additions: '',
+        updated_at: new Date().toISOString()
+      };
+
+      try {
+        const res = await fetch('/api/save-guidance', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ merchantId: currentMerchantId, guidance })
+        });
+
+        if (res.ok) {
+          showStatus('success', `✅ Field-specific guidance saved for ${currentMerchantId}`);
+        } else {
+          throw new Error('Save failed');
+        }
+      } catch (error) {
+        showStatus('error', '❌ Failed to save: ' + error.message);
+      }
+    }
+
+    function showConfirmation() {
+      document.getElementById('confirmationOverlay').style.display = 'flex';
+    }
+
+    function closeConfirmation() {
+      document.getElementById('confirmationOverlay').style.display = 'none';
+    }
+
+    async function confirmSave() {
+      closeConfirmation();
+      
+      if (!currentData || !currentData.schedules) {
+        showStatus('error', '❌ No data to save');
+        return;
+      }
+      
+      showStatus('info', '⏳ Saving training data...');
+      
+      // Gather corrections data
+      const schedules = currentData.schedules.map((schedule, index) => {
+        const corrections = [];
+        const original = schedule.original_ai_extraction || {};
+        
+        // Compare each field
+        const fields = ['item_name', 'description', 'billing_type', 'total_price', 'quantity', 
+                       'start_date', 'periods', 'frequency_unit', 'frequency_every', 'months_of_service',
+                       'net_terms', 'billing_timing', 'event_to_track'];
+        
+        fields.forEach(field => {
+          const currentVal = document.querySelector(`[data-field="${field}"][data-index="${index}"]`)?.value;
+          if (currentVal !== String(original[field] || '')) {
+            corrections.push({
+              field: field,
+              original_value: original[field] || null,
+              corrected_value: currentVal,
+              why: document.querySelector(`[data-field="instructions"][data-index="${index}"]`)?.value || ''
+            });
+          }
+        });
+        
+        return {
+          ...schedule,
+          corrections_made: corrections,
+          instructions: document.querySelector(`[data-field="instructions"][data-index="${index}"]`)?.value || '',
+          field_guidance_item_name: document.querySelector(`[data-field="field_guidance_item_name"][data-index="${index}"]`)?.value || '',
+          field_guidance_description: document.querySelector(`[data-field="field_guidance_description"][data-index="${index}"]`)?.value || '',
+          field_guidance_total_price: document.querySelector(`[data-field="field_guidance_total_price"][data-index="${index}"]`)?.value || '',
+          field_guidance_billing_type: document.querySelector(`[data-field="field_guidance_billing_type"][data-index="${index}"]`)?.value || '',
+          field_guidance_start_date: document.querySelector(`[data-field="field_guidance_start_date"][data-index="${index}"]`)?.value || '',
+          field_guidance_frequency: document.querySelector(`[data-field="field_guidance_frequency"][data-index="${index}"]`)?.value || ''
+        };
+      });
+      
+      try {
+        const res = await fetch('/api/save-demo-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            merchantId: currentMerchantId,
+            schedules: schedules,
+            pdfSessionId: currentData.pdf_session_id,
+            systemPrompt: currentData.system_prompt,
+            garageRevenueSchedules: currentData.garage_revenue_schedules
+          })
+        });
+        
+        const result = await res.json();
+        
+        if (res.ok) {
+          showStatus('success', '✅ Training data saved successfully!');
+        } else {
+          throw new Error(result.error || 'Save failed');
+        }
+      } catch (error) {
+        console.error('Save error:', error);
+        showStatus('error', '❌ Failed to save: ' + error.message);
+      }
+    }
+
+    function showPDFModal() {
+      if (!currentData || !currentData.pdf_session_id) {
+        showStatus('error', '❌ No PDF available');
+        return;
+      }
+      
+      document.getElementById('pdfViewer').src = `/api/view-pdf/${currentData.pdf_session_id}`;
+      document.getElementById('pdfModal').style.display = 'flex';
+    }
+
+    function closePDFModal(event) {
+      if (!event || event.target.id === 'pdfModal') {
+        document.getElementById('pdfModal').style.display = 'none';
+        document.getElementById('pdfViewer').src = '';
+      }
+    }
+    
+    // Check if coming from production with verified merchant
+    async function checkVerifiedAccess() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const merchantId = urlParams.get('merchant');
+      const verified = urlParams.get('verified');
+      
+      if (merchantId && verified === 'true') {
+        // Skip auth gate, go directly to settings
+        try {
+          await loadMerchants();
+          currentMerchantId = merchantId;
+          
+          document.getElementById('authGate').style.display = 'none';
+          document.getElementById('settingsApp').style.display = 'flex';
+          
+          populateMerchantDropdown();
+          document.getElementById('merchantDisplaySelect').value = merchantId;
+          
+          await loadFieldGuidance();
+          await loadMerchantTier();
+          
+          // Clear URL parameters
+          window.history.replaceState({}, document.title, '/settings.html');
+          
+        } catch (error) {
+          console.error('Failed to load verified access:', error);
+          document.getElementById('authGate').style.display = 'flex';
+          document.getElementById('settingsApp').style.display = 'none';
+        }
+      }
+    }
+    
+    async function saveMerchantTier() {
+      const tier = document.getElementById('merchantTier').value;
+      
+      if (!currentMerchantId) return;
+      
+      try {
+        const res = await fetch(`/api/merchant/${currentMerchantId}/tier`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tier })
+        });
+        
+        if (res.ok) {
+          showStatus('success', `✅ Tier updated to ${tier}`);
+        } else {
+          throw new Error('Failed to update tier');
+        }
+      } catch (error) {
+        console.error('Failed to save tier:', error);
+        showStatus('error', '❌ Failed to update tier');
+      }
+    }
+    
+    async function loadMerchantTier() {
+      if (!currentMerchantId) return;
+      
+      try {
+        const res = await fetch(`/api/merchant/${currentMerchantId}`);
+        const data = await res.json();
+        
+        if (data.merchant && data.merchant.tier) {
+          document.getElementById('merchantTier').value = data.merchant.tier;
+        }
+      } catch (error) {
+        console.error('Failed to load tier:', error);
+      }
+    }
+    
+    // Initialize
+    loadMerchants();
+    checkVerifiedAccess();
+  </script>
+</body>
+</html>

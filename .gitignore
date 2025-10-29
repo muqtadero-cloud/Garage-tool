@@ -10,9 +10,13 @@ package-lock.json
 uploads/
 *.pdf
 
-# Merchant training data (may contain sensitive contracts)
-# Uncomment if you want to exclude merchant data from version control
-# merchant_data/
+# Merchant data (SQLite database contains sensitive contracts)
+merchant_data.db
+merchant_data.db-shm
+merchant_data.db-wal
+
+# Legacy merchant folders (can be removed after migration)
+merchant_data/
 
 # OS files
 .DS_Store

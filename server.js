@@ -19,7 +19,12 @@ import {
   saveIntegrationMapping,
   saveDemoSession,
   loadDemoSession,
-  listMerchants
+  listMerchants,
+  getTrainingContractPath,
+  hasTrainingContract,
+  getMerchant,
+  updateMerchantTabsCredentials,
+  updateMerchantTier
 } from './lib/merchant.js';
 
 // Import AI functions
@@ -84,8 +89,9 @@ app.post('/api/extract', upload.single('file'), async (req, res) => {
   const pdfPath = path.join(uploadDir, `${sessionId}.pdf`);
   
   try {
-    const { model = 'o3', forceMulti = 'auto', runs = '2', format, merchantId = 'default', stage = 'demo', consistency = 'consistent' } = req.query;
-    const chosenModel = ['o3','o4-mini','gpt-4o-mini','o3-mini'].includes(model) ? model : 'o3';
+    const { model = 'gpt-5', forceMulti = 'auto', runs = '1', format, merchantId = 'default', stage = 'demo', consistency = 'consistent' } = req.query;
+    // Use the model names exactly as selected in the UI; allow only the supported set
+    const chosenModel = ['gpt-5', 'gpt-5-thinking', 'o3'].includes(model) ? model : 'gpt-5';
     const agreementRuns = Math.max(1, Math.min(5, Number(runs) || 1));
 
     // Save PDF
@@ -117,35 +123,6 @@ app.post('/api/extract', upload.single('file'), async (req, res) => {
 
     const systemPrompt = buildSystemPrompt(forceMulti, merchantGuidance.system_additions || '', demoSession, consistency);
 
-    // Log the system prompt to verify demo data is included
-    if (stage === 'production' && demoSession) {
-      console.log('\n========== PRODUCTION MODE SYSTEM PROMPT ==========');
-      console.log(`Using demo session for merchant: ${merchantId}`);
-      console.log(`Demo session has ${demoSession.schedules?.length || 0} training examples`);
-      
-      // Show a snippet of the corrections being sent
-      if (demoSession.schedules && demoSession.schedules[0]) {
-        const firstExample = demoSession.schedules[0];
-        console.log('\n📚 Training Example #1:');
-        console.log(`  Item: "${firstExample.item_name}"`);
-        console.log(`  Billing Type: ${firstExample.billing_type}`);
-        console.log(`  Quantity: ${firstExample.quantity}`);
-        if (firstExample.original_ai_extraction) {
-          console.log('\n⚠️ Corrections in training:');
-          if (firstExample.original_ai_extraction.billing_type !== firstExample.billing_type) {
-            console.log(`  • Billing Type: ${firstExample.original_ai_extraction.billing_type} → ${firstExample.billing_type}`);
-          }
-          if (firstExample.original_ai_extraction.quantity !== firstExample.quantity) {
-            console.log(`  • Quantity: ${firstExample.original_ai_extraction.quantity} → ${firstExample.quantity}`);
-          }
-        }
-        if (firstExample.instruction_billing_type) {
-          console.log(`\n📝 Instruction: "${firstExample.instruction_billing_type}"`);
-        }
-      }
-      console.log('\n===================================================\n');
-    }
-
     // Build input messages
     const inputMessages = [
       { role: 'system', content: systemPrompt }
@@ -153,9 +130,9 @@ app.post('/api/extract', upload.single('file'), async (req, res) => {
     
     // In production mode, add few-shot example from training PDF
     if (stage === 'production' && demoSession) {
-      const trainingPdfPath = path.join(getMerchantDir(merchantId), 'training_contract.pdf');
+      const trainingPdfPath = getTrainingContractPath(merchantId);
       
-      if (fs.existsSync(trainingPdfPath)) {
+      if (trainingPdfPath && fs.existsSync(trainingPdfPath)) {
         console.log(`Loading training PDF for ${merchantId} as few-shot example`);
         
         const trainingFileUpload = await client.files.create({
@@ -171,34 +148,86 @@ app.post('/api/extract', upload.single('file'), async (req, res) => {
           ]
         });
         
-        const exampleOutput = {
-          revenue_schedules: demoSession.schedules.map(s => ({
-            item_name: s.item_name,
-            description: s.description || '',
-            total_price: s.total_price,
-            billing_type: s.billing_type,
-            quantity: s.quantity || 1,
-            start_date: s.start_date,
-            frequency_unit: s.frequency_unit,
-            frequency_every: s.frequency_every || 1,
-            periods: s.periods || 1,
-            months_of_service: s.months_of_service || 12,
-            net_terms: s.net_terms || 0,
-            billing_timing: s.billing_timing || 'first',
-            arrears: s.arrears || false,
-            event_to_track: s.event_to_track || '',
-            tiers: s.tiers || []
-          }))
+        // Build structured training example with before/after and corrections
+        const trainingExample = {
+          original_model_generation: {
+            revenue_schedules: demoSession.schedules.map(s => s.original_ai_extraction || {
+              item_name: s.item_name,
+              description: s.description || '',
+              total_price: s.total_price,
+              billing_type: s.billing_type,
+              quantity: s.quantity || 1,
+              start_date: s.start_date,
+              frequency_unit: s.frequency_unit,
+              frequency_every: s.frequency_every || 1,
+              periods: s.periods || 1,
+              months_of_service: s.months_of_service || 12,
+              net_terms: s.net_terms || 0,
+              billing_timing: s.billing_timing || 'first',
+              arrears: s.arrears || false,
+              event_to_track: s.event_to_track || '',
+              tiers: s.tiers || []
+            })
+          },
+          corrected_generation: {
+            revenue_schedules: demoSession.schedules.map(s => ({
+              item_name: s.item_name,
+              description: s.description || '',
+              total_price: s.total_price,
+              billing_type: s.billing_type,
+              quantity: s.quantity || 1,
+              start_date: s.start_date,
+              frequency_unit: s.frequency_unit,
+              frequency_every: s.frequency_every || 1,
+              periods: s.periods || 1,
+              months_of_service: s.months_of_service || 12,
+              net_terms: s.net_terms || 0,
+              billing_timing: s.billing_timing || 'first',
+              arrears: s.arrears || false,
+              event_to_track: s.event_to_track || '',
+              tiers: s.tiers || []
+            }))
+          },
+          corrections_made: demoSession.schedules.map((s, idx) => {
+            if (!s.original_ai_extraction) return null;
+            const changes = [];
+            const orig = s.original_ai_extraction;
+            if (orig.item_name !== s.item_name) changes.push({ field: 'item_name', was: orig.item_name, corrected_to: s.item_name, why: s.instruction_item_name || 'No instruction provided' });
+            if (orig.description !== s.description) changes.push({ field: 'description', was: orig.description, corrected_to: s.description, why: s.instruction_description || 'No instruction provided' });
+            if (orig.total_price !== s.total_price) changes.push({ field: 'total_price', was: orig.total_price, corrected_to: s.total_price, why: s.instruction_total_price || 'No instruction provided' });
+            if (orig.billing_type !== s.billing_type) changes.push({ field: 'billing_type', was: orig.billing_type, corrected_to: s.billing_type, why: s.instruction_billing_type || 'No instruction provided' });
+            if (orig.start_date !== s.start_date) changes.push({ field: 'start_date', was: orig.start_date, corrected_to: s.start_date, why: s.instruction_start_date || 'No instruction provided' });
+            if (orig.frequency_unit !== s.frequency_unit) changes.push({ field: 'frequency_unit', was: orig.frequency_unit, corrected_to: s.frequency_unit, why: s.instruction_frequency_unit || 'No instruction provided' });
+            if (orig.periods !== s.periods) changes.push({ field: 'periods', was: orig.periods, corrected_to: s.periods, why: s.instruction_periods || 'No instruction provided' });
+            return changes.length > 0 ? { schedule_index: idx, schedule_name: s.item_name, changes } : null;
+          }).filter(Boolean)
         };
         
+        // Format as explicit training example with clear labels
+        const explicitTrainingPrompt = `TRAINING EXAMPLE:
+
+This is the model-generated JSON for the training PDF:
+${JSON.stringify(trainingExample.original_model_generation, null, 2)}
+
+This is the CORRECT JSON after human review and corrections:
+${JSON.stringify(trainingExample.corrected_generation, null, 2)}
+
+These are the corrections that were made and WHY they were necessary:
+${JSON.stringify(trainingExample.corrections_made.filter(Boolean), null, 2)}
+
+INSTRUCTIONS: Use this training example to understand common mistakes and how to extract revenue schedules correctly for this merchant. Pay special attention to the "why" explanations for each correction.`;
+
         inputMessages.push({
           role: 'assistant',
-          content: JSON.stringify(exampleOutput, null, 2)
+          content: explicitTrainingPrompt
         });
         
-        console.log(`Added few-shot example with ${demoSession.schedules.length} schedules`);
+        console.log(`Added few-shot example with ${demoSession.schedules.length} schedules and ${trainingExample.corrections_made.filter(Boolean).length} correction sets`);
+        
+        // Clean up temp file after use
+        fs.unlink(trainingPdfPath, () => {});
       } else {
-        console.log(`Training PDF not found for ${merchantId} at ${trainingPdfPath}`);
+        console.log(`Training PDF not found for ${merchantId}`);
       }
     }
     
@@ -246,7 +275,27 @@ app.post('/api/extract', upload.single('file'), async (req, res) => {
       }
     });
 
-    const garage = toGarageAllStrict(norm1);
+    let garage = toGarageAllStrict(norm1);
+    
+    // Apply defaults and remove exclusions
+    garage = garage.map(g => {
+      let processed = {...g};
+      // Apply default overrides
+      if (merchantGuidance.default_overrides) {
+        Object.entries(merchantGuidance.default_overrides).forEach(([field, value]) => {
+          if (value !== null && value !== '') {
+            processed[field] = value;
+          }
+        });
+      }
+      // Remove excluded fields
+      if (merchantGuidance.excluded_fields && merchantGuidance.excluded_fields.length > 0) {
+        merchantGuidance.excluded_fields.forEach(field => {
+          delete processed[field];
+        });
+      }
+      return processed;
+    });
 
     res.json({
       model_used: chosenModel,
@@ -273,7 +322,9 @@ app.post('/api/extract', upload.single('file'), async (req, res) => {
 
 // Use contract assistant (API endpoint for Tabs integration)
 app.get('/api/use-contract-assistant', async (req, res) => {
-  const { contractID, model = 'o3', forceMulti = 'auto', format, env = 'dev' } = req.query;
+  const { contractID, model = 'gpt-5', forceMulti = 'auto', format, env = 'dev' } = req.query;
+  const actualModel = ['gpt-5', 'gpt-5-thinking', 'o3'].includes(model) ? model : 'gpt-5';
+  
   const entryKey = req.headers['entrykey'] || req.headers['entryKey'];
   if (!entryKey || entryKey !== process.env.USE_CONTRACT_PROCESSING_KEY) return res.status(401).json({ error: 'Invalid or missing entryKey' });
   if (!contractID) return res.status(400).json({ error: 'Missing contractID' });
@@ -495,12 +546,6 @@ app.post('/api/save-demo-session', express.json(), (req, res) => {
       return res.status(400).json({ error: 'schedules array required' });
     }
     
-    // CRITICAL: Regenerate garage_revenue_schedules from the CORRECTED schedules
-    // This ensures production mode uses the corrected values, not the original AI extraction
-    console.log('Regenerating Garage output from corrected schedules...');
-    demoData.garage_revenue_schedules = toGarageAllStrict(demoData.schedules);
-    console.log(`Generated ${demoData.garage_revenue_schedules.length} Garage schedules from corrected data`);
-    
     const pdfSessionId = demoData.pdf_session_id || null;
     const success = saveDemoSession(demoData.merchant_id, demoData, pdfSessionId);
     
@@ -559,6 +604,311 @@ app.get('/api/view-pdf/:sessionId', (req, res) => {
     res.sendFile(path.resolve(pdfPath));
   } catch (err) {
     res.status(500).json({ error: 'Failed to load PDF', debug: { message: err?.message } });
+  }
+});
+
+// Get merchant details (including Tabs credentials)
+app.get('/api/merchant/:merchantId', (req, res) => {
+  try {
+    const { merchantId } = req.params;
+    const merchant = getMerchant(merchantId);
+    
+    if (!merchant) {
+      return res.status(404).json({ error: 'Merchant not found' });
+    }
+    
+    res.json({ merchant });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to load merchant', debug: { message: err?.message } });
+  }
+});
+
+// Update merchant Tabs credentials
+app.post('/api/merchant/:merchantId/tabs-credentials', express.json(), (req, res) => {
+  try {
+    const { merchantId } = req.params;
+    const { tabsApiKey, tabsEnv } = req.body;
+    
+    const success = updateMerchantTabsCredentials(merchantId, tabsApiKey, tabsEnv);
+    
+    if (success) {
+      res.json({ success: true, message: 'Tabs credentials updated successfully' });
+    } else {
+      res.status(500).json({ error: 'Failed to update credentials' });
+    }
+  } catch (err) {
+    res.status(500).json({ error: 'Update failed', debug: { message: err?.message } });
+  }
+});
+
+// Update merchant tier
+app.post('/api/merchant/:merchantId/tier', express.json(), (req, res) => {
+  try {
+    const { merchantId } = req.params;
+    const { tier } = req.body;
+    
+    if (!tier) {
+      return res.status(400).json({ error: 'Tier is required' });
+    }
+    
+    const success = updateMerchantTier(merchantId, tier);
+    
+    if (success) {
+      res.json({ success: true, message: `Merchant tier updated to ${tier}` });
+    } else {
+      res.status(500).json({ error: 'Failed to update tier' });
+    }
+  } catch (err) {
+    res.status(500).json({ error: 'Update failed', debug: { message: err?.message } });
+  }
+});
+
+// Extract from Tabs contract (production mode)
+app.post('/api/extract-from-tabs', express.json(), async (req, res) => {
+  try {
+    const { merchantId = 'default', contractID, model = 'gpt-5', stage = 'production', tabsEnv } = req.body;
+    const actualModel = ['gpt-5', 'gpt-5-thinking', 'o3'].includes(model) ? model : 'gpt-5';
+    
+    if (!contractID) {
+      return res.status(400).json({ error: 'Missing contractID' });
+    }
+    
+    // Get merchant Tabs credentials
+    const merchant = getMerchant(merchantId);
+    if (!merchant || !merchant.tabsApiKey) {
+      return res.status(400).json({ 
+        error: 'Merchant has no Tabs API key configured',
+        hint: 'Please add Tabs API credentials in merchant settings'
+      });
+    }
+    
+    // Use environment from request if provided, otherwise use merchant's stored environment
+    const effectiveEnv = tabsEnv || merchant.tabsEnv || 'prod';
+    const isProd = effectiveEnv === 'prod';
+    const apiEndpoint = isProd 
+      ? 'https://integrators.prod.api.tabsplatform.com' 
+      : 'https://integrators.dev.api.tabsplatform.com';
+    
+    console.log(`📥 Fetching contract ${contractID} from Tabs (${effectiveEnv}) for ${merchantId}`);
+    
+    // Fetch PDF from Tabs API
+    let pdfResp;
+    try {
+      pdfResp = await fetch(`${apiEndpoint}/v3/contracts/${contractID}/file`, {
+        headers: { 
+          'accept': 'application/pdf', 
+          'Authorization': merchant.tabsApiKey
+        }
+      });
+      
+      if (!pdfResp.ok) {
+        throw new Error(`Failed to fetch PDF for contract ${contractID}: ${pdfResp.status} ${pdfResp.statusText}`);
+      }
+    } catch (err) {
+      console.error('PDF fetch error:', err);
+      return res.status(500).json({ error: 'Failed to fetch PDF from Tabs: ' + err.message });
+    }
+    
+    const pdfBuffer = Buffer.from(await pdfResp.arrayBuffer());
+    const sessionId = Date.now() + '_' + Math.random().toString(36).substring(7);
+    const pdfPath = path.join(uploadDir, `${sessionId}.pdf`);
+    
+    // Save PDF temporarily
+    fs.writeFileSync(pdfPath, pdfBuffer);
+    console.log(`✅ Downloaded PDF: ${pdfBuffer.length} bytes`);
+    
+    // Load merchant data
+    const merchantGuidance = loadMerchantGuidance(merchantId);
+    let integrationPairs = loadIntegrationMapping(merchantId);
+    const demoSession = (stage === 'production') ? loadDemoSession(merchantId) : null;
+    
+    // Upload to OpenAI
+    const uploaded = await client.files.create({
+      file: await toFile(fs.createReadStream(pdfPath), `${contractID}.pdf`),
+      purpose: 'assistants'
+    });
+    
+    const systemPrompt = buildSystemPrompt('auto', merchantGuidance.system_additions || '', demoSession, 'consistent');
+    
+    // Build input messages
+    const inputMessages = [
+      { role: 'system', content: systemPrompt }
+    ];
+    
+    // In production mode, add few-shot example from training PDF
+    if (stage === 'production' && demoSession) {
+      const trainingPdfPath = getTrainingContractPath(merchantId);
+      
+      if (trainingPdfPath && fs.existsSync(trainingPdfPath)) {
+        console.log(`Loading training PDF for ${merchantId} as few-shot example`);
+        
+        const trainingFileUpload = await client.files.create({
+          file: await toFile(fs.createReadStream(trainingPdfPath), 'training_contract.pdf'),
+          purpose: 'assistants'
+        });
+        
+        inputMessages.push({
+          role: 'user',
+          content: [
+            { type: 'input_text', text: 'Extract Garage-ready revenue schedules as a single JSON object.' },
+            { type: 'input_file', file_id: trainingFileUpload.id }
+          ]
+        });
+        
+        // Build structured training example with before/after and corrections
+        const trainingExample = {
+          original_model_generation: {
+            revenue_schedules: demoSession.schedules.map(s => s.original_ai_extraction || {
+              item_name: s.item_name,
+              description: s.description || '',
+              total_price: s.total_price,
+              billing_type: s.billing_type,
+              quantity: s.quantity || 1,
+              start_date: s.start_date,
+              frequency_unit: s.frequency_unit,
+              frequency_every: s.frequency_every || 1,
+              periods: s.periods || 1,
+              months_of_service: s.months_of_service || 12,
+              net_terms: s.net_terms || 0,
+              billing_timing: s.billing_timing || 'first',
+              arrears: s.arrears || false,
+              event_to_track: s.event_to_track || '',
+              tiers: s.tiers || []
+            })
+          },
+          corrected_generation: {
+            revenue_schedules: demoSession.schedules.map(s => ({
+              item_name: s.item_name,
+              description: s.description || '',
+              total_price: s.total_price,
+              billing_type: s.billing_type,
+              quantity: s.quantity || 1,
+              start_date: s.start_date,
+              frequency_unit: s.frequency_unit,
+              frequency_every: s.frequency_every || 1,
+              periods: s.periods || 1,
+              months_of_service: s.months_of_service || 12,
+              net_terms: s.net_terms || 0,
+              billing_timing: s.billing_timing || 'first',
+              arrears: s.arrears || false,
+              event_to_track: s.event_to_track || '',
+              tiers: s.tiers || []
+            }))
+          },
+          corrections_made: demoSession.schedules.map((s, idx) => {
+            if (!s.original_ai_extraction) return null;
+            const changes = [];
+            const orig = s.original_ai_extraction;
+            if (orig.item_name !== s.item_name) changes.push({ field: 'item_name', was: orig.item_name, corrected_to: s.item_name, why: s.instruction_item_name || 'No instruction provided' });
+            if (orig.description !== s.description) changes.push({ field: 'description', was: orig.description, corrected_to: s.description, why: s.instruction_description || 'No instruction provided' });
+            if (orig.total_price !== s.total_price) changes.push({ field: 'total_price', was: orig.total_price, corrected_to: s.total_price, why: s.instruction_total_price || 'No instruction provided' });
+            if (orig.billing_type !== s.billing_type) changes.push({ field: 'billing_type', was: orig.billing_type, corrected_to: s.billing_type, why: s.instruction_billing_type || 'No instruction provided' });
+            if (orig.start_date !== s.start_date) changes.push({ field: 'start_date', was: orig.start_date, corrected_to: s.start_date, why: s.instruction_start_date || 'No instruction provided' });
+            if (orig.frequency_unit !== s.frequency_unit) changes.push({ field: 'frequency_unit', was: orig.frequency_unit, corrected_to: s.frequency_unit, why: s.instruction_frequency_unit || 'No instruction provided' });
+            if (orig.periods !== s.periods) changes.push({ field: 'periods', was: orig.periods, corrected_to: s.periods, why: s.instruction_periods || 'No instruction provided' });
+            return changes.length > 0 ? { schedule_index: idx, schedule_name: s.item_name, changes } : null;
+          }).filter(Boolean)
+        };
+        
+        // Format as explicit training example with clear labels
+        const explicitTrainingPrompt = `TRAINING EXAMPLE:
+
+This is the model-generated JSON for the training PDF:
+${JSON.stringify(trainingExample.original_model_generation, null, 2)}
+
+This is the CORRECT JSON after human review and corrections:
+${JSON.stringify(trainingExample.corrected_generation, null, 2)}
+
+These are the corrections that were made and WHY they were necessary:
+${JSON.stringify(trainingExample.corrections_made.filter(Boolean), null, 2)}
+
+INSTRUCTIONS: Use this training example to understand common mistakes and how to extract revenue schedules correctly for this merchant. Pay special attention to the "why" explanations for each correction.`;
+
+        inputMessages.push({
+          role: 'assistant',
+          content: explicitTrainingPrompt
+        });
+        
+        console.log(`Added few-shot example with ${demoSession.schedules.length} schedules and ${trainingExample.corrections_made.filter(Boolean).length} correction sets`);
+        
+        // Clean up temp file after use
+        fs.unlink(trainingPdfPath, () => {});
+      }
+    }
+    
+    // Add the contract to extract
+    inputMessages.push({
+      role: 'user',
+      content: [
+        { type: 'input_text', text: 'Extract Garage-ready revenue schedules as a single JSON object.' },
+        { type: 'input_file', file_id: uploaded.id }
+      ]
+    });
+    
+    // Extract
+    const response = await client.responses.create({
+      model,
+      input: inputMessages,
+      text: { format: { type: 'json_object' } }
+    });
+    
+    const data = parseModelJson(response);
+    const normalized = normalizeSchedules(data);
+    
+    // Apply fuzzy matching to integration items
+    normalized.forEach(schedule => {
+      if (schedule.item_name && integrationPairs.length > 0) {
+        const matchResult = fuzzyMatchIntegrationItem(schedule.item_name, integrationPairs);
+        schedule.integration_item = matchResult.integration_item;
+        schedule.integration_match_confidence = matchResult.match_confidence;
+        schedule.integration_match_score = matchResult.match_score;
+        schedule.integration_matched_name = matchResult.matched_contract_name;
+      }
+    });
+    
+    let garage = toGarageAllStrict(normalized);
+    
+    // Apply defaults and remove exclusions
+    garage = garage.map(g => {
+      let processed = {...g};
+      // Apply default overrides
+      if (merchantGuidance.default_overrides) {
+        Object.entries(merchantGuidance.default_overrides).forEach(([field, value]) => {
+          if (value !== null && value !== '') {
+            processed[field] = value;
+          }
+        });
+      }
+      // Remove excluded fields
+      if (merchantGuidance.excluded_fields && merchantGuidance.excluded_fields.length > 0) {
+        merchantGuidance.excluded_fields.forEach(field => {
+          delete processed[field];
+        });
+      }
+      return processed;
+    });
+    
+    res.json({
+      model_used: model,
+      merchant_id: merchantId,
+      contract_id: contractID,
+      tabs_env: merchant.tabsEnv,
+      stage: stage,
+      system_prompt: systemPrompt,
+      schedules: normalized,
+      garage_revenue_schedules: garage,
+      model_recommendations: data.model_recommendations ?? null,
+      issues: Array.isArray(data.issues) ? data.issues : [],
+      totals_check: data.totals_check ?? null,
+      integration_mappings_used: integrationPairs.length,
+      demo_session_loaded: demoSession ? true : false,
+      pdf_session_id: sessionId
+    });
+    
+    // Don't delete the PDF immediately so it can be viewed
+  } catch (err) {
+    console.error('Extract from Tabs error:', err);
+    res.status(500).json({ error: 'Extraction failed', debug: { message: err?.message, stack: err?.stack } });
   }
 });
 
